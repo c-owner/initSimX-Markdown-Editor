@@ -188,6 +188,7 @@
         .contact-actions button[type="submit"] { color: #181320; background: #c4b5fd; border-color: #c4b5fd; font-weight: 700; }
         .contact-status { min-height: 1.5em; margin-bottom: 0; font-size: 14px; }
         .contact-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+        .cf-turnstile { display: flex; justify-content: center; margin-top: 18px; }
         @media (max-width: 560px) {
             footer { flex-wrap: wrap; }
             .contact-dialog { padding: 22px; }
@@ -251,7 +252,7 @@
 <dialog class="contact-dialog" id="contact-dialog" aria-labelledby="contact-title">
     <form id="contact-form">
         <h2 id="contact-title">문의하기</h2>
-        <p>개선 제안이나 오류를 알려주세요. 답변을 받을 이메일과 문의 내용은 비공개로 저장됩니다.</p>
+        <p>개선 제안이나 오류를 알려주세요. 답변 이메일과 문의 내용은 비공개로 저장됩니다. 도배 방지를 위해 IP 원문 대신 해시 식별값으로 전송 횟수를 제한합니다.</p>
         <label>문의 종류
             <select name="category" required>
                 <option value="suggestion">개선 제안</option>
@@ -268,6 +269,7 @@
         <label class="contact-honeypot" aria-hidden="true">비워 두세요
             <input name="website" tabindex="-1" autocomplete="off">
         </label>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAGV8AHwhzOmcyr9_" data-action="contact"></div>
         <div class="contact-actions">
             <button type="button" id="close-contact">닫기</button>
             <button type="submit">보내기</button>
@@ -276,6 +278,7 @@
     </form>
 </dialog>
 
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
     const contactDialog = document.querySelector('#contact-dialog');
     const contactForm = document.querySelector('#contact-form');
@@ -285,15 +288,23 @@
     contactForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         const submitButton = contactForm.querySelector('[type="submit"]');
+        const formData = new FormData(contactForm);
+        if (!formData.get('cf-turnstile-response')) {
+            contactStatus.textContent = 'Cloudflare 보안 확인을 완료해 주세요.';
+            return;
+        }
         submitButton.disabled = true;
         contactStatus.textContent = '전송 중입니다…';
         try {
             const response = await fetch('/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(Object.fromEntries(new FormData(contactForm)))
+                body: JSON.stringify(Object.fromEntries(formData))
             });
-            if (!response.ok) throw new Error(response.status === 429 ? '잠시 후 다시 시도해 주세요.' : '문의 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+            if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                throw new Error(result.error || '문의 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+            }
             contactForm.reset();
             contactStatus.textContent = '문의가 접수되었습니다. 감사합니다.';
         } catch (error) {
