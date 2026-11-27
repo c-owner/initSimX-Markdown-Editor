@@ -636,6 +636,17 @@
             <select aria-label="문서 테마" id="theme">
             <option value="less-light">Less · 라이트</option>
             <option value="less-dark">Less · 다크</option>
+            <optgroup label="Typora 테마">
+                <option value="adark">Adark</option><option value="alfluent">Alfluent</option>
+                <option value="drake">Drake</option><option value="drake-black">Drake Black</option>
+                <option value="drake-dark">Drake Dark</option><option value="drake-google">Drake Google</option>
+                <option value="drake-light">Drake Light</option><option value="drake-material">Drake Material</option>
+                <option value="drake-purple">Drake Purple</option><option value="drake-vue">Drake Vue</option>
+                <option value="fluent">Fluent</option><option value="github">GitHub</option>
+                <option value="mo">Mo</option><option value="mo-dark">Mo Dark</option>
+                <option value="newsprint">Newsprint</option><option value="notes-dark">Notes Dark</option>
+                <option value="pixyll">Pixyll</option><option value="whitey">Whitey</option>
+            </optgroup>
         </select>
             <button disabled id="save">저장</button>
         </div>
@@ -969,10 +980,12 @@
     }
 
     let appliedEditorTheme=null;
+    const darkThemes=new Set(['less-dark','adark','drake-black','drake-dark','mo-dark','notes-dark']);
     function applyTheme() {
-        const dark=$('theme').value==='less-dark';
+        const selectedTheme=$('theme').value;
+        const dark=darkThemes.has(selectedTheme);
         $('stage').dataset.theme=dark?'dark':'light';
-        $('stage').dataset.documentTheme=dark?'less-dark':'less-light';
+        $('stage').dataset.documentTheme=selectedTheme;
         $('reader').classList.toggle('theme-dark',dark);
         $('reader').classList.toggle('theme-light',!dark);
         $('visual').classList.toggle('theme-dark',dark);
@@ -981,7 +994,8 @@
     }
     const themeCache=new Map();
     async function documentCSS(theme){
-        if(!themeCache.has(theme))themeCache.set(theme,Promise.all(['/themes/'+theme+'.css','/style.css','/base.user.css'].map(async path=>{const response=await fetch(path);if(!response.ok)throw Error('문서 스타일을 불러올 수 없습니다: '+path);return response.text();})).then(parts=>parts.join('\n')).catch(error=>{themeCache.delete(theme);throw error;}));
+        const themeFile=theme==='less-light'?'less-light':theme==='less-dark'?'less-dark':theme;
+        if(!themeCache.has(theme))themeCache.set(theme,Promise.all(['/themes/'+themeFile+'.css','/style.css','/base.user.css'].map(async path=>{const response=await fetch(path);if(!response.ok)throw Error('문서 스타일을 불러올 수 없습니다: '+path);return response.text();})).then(parts=>parts.join('\n')).catch(error=>{themeCache.delete(theme);throw error;}));
         return themeCache.get(theme);
     }
     let renderVersion=0, previewURLs=[];
