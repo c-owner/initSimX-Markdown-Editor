@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관계 카드 생성기 | initSimX</title>
+<meta name="description" content="두 인물의 사진, 서로에 대한 감정과 함께 겪은 사건을 관계 카드로 기록하고 Markdown용 HTML로 내보내세요.">
+<link rel="canonical" href="https://initsimx-markdown-editor.pages.dev/helper/관계카드_생성기.html">
+<link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/site.css"><link rel="stylesheet" href="/helper/relationship.css">
+<script src="/vendor/profile-upload.js" defer></script><script type="module" src="/helper/relationship.js"></script>
+</head><body>
+<nav class="site-header" aria-label="주 메뉴"><a class="brand" href="/">◈ initSimX</a><div class="site-nav"><a href="/editor/">마크다운 편집기</a><a href="/helper/프로필_생성기.html">프로필 생성기</a><a href="/helper/프로필카드_생성기.html">프로필카드</a><a href="/helper/관계카드_생성기.html" aria-current="page">관계 카드</a></div></nav>
+<header class="intro"><p class="eyebrow">BETWEEN TWO CHARACTERS</p><h1>두 사람 사이의 이야기</h1><p>우정부터 사랑, 가족과 갈등까지. 두 사람 사이의 이야기를 남겨보세요.</p></header>
+<noscript><p class="intro">관계 카드를 만들려면 브라우저에서 JavaScript를 켜주세요.</p></noscript>
+<main class="layout">
+<form id="controls" class="controls">
+<section class="panel"><h2>01 · 관계의 이름</h2>
+<label for="relation">관계명</label><input id="relation" maxlength="80">
+<div class="presets" aria-label="관계명 빠른 선택"><button type="button" data-relation="오래된 친구">친구</button><button type="button" data-relation="서로에게 특별한 사람">연인</button><button type="button" data-relation="가장 가까운 가족">가족</button><button type="button" data-relation="서로를 자극하는 라이벌">라이벌</button></div>
+<label for="summary">한 줄 소개</label><textarea id="summary" rows="2" maxlength="300"></textarea>
+<div class="pair"><div><label for="theme">카드 테마</label><select id="theme"><option value="general">일반</option><option value="love">러브</option><option value="revenge">원한</option><option value="family">가족</option></select></div><div><label for="date">기록 날짜</label><input id="date" type="date"></div></div>
+</section>
+<div id="people"></div>
+<section class="panel"><h2>04 · 함께 남긴 기록</h2>
+<label for="change">최근 변화</label><textarea id="change" rows="3" maxlength="2000"></textarea>
+<label for="memory">함께 겪은 사건</label><textarea id="memory" rows="4" maxlength="4000"></textarea>
+<label for="unfinished">아직 남은 이야기</label><textarea id="unfinished" rows="3" maxlength="2000"></textarea>
+</section>
+<div class="actions"><button type="button" id="save">작업 저장</button><button type="button" id="load">작업 불러오기</button><button type="button" id="reset">예시로 초기화</button></div>
+<input type="file" id="project-file" accept="application/json,.json" hidden>
+<p class="hint">자동 저장되지 않습니다. 이어서 편집하려면 작업 JSON을 저장하세요. 사진은 브라우저에서 처리하며 서버에 업로드하지 않습니다.</p>
+</form>
+<section class="preview-column" aria-labelledby="preview-title"><div class="preview-toolbar"><div><p class="eyebrow">LIVE PREVIEW</p><h2 id="preview-title">관계의 한 페이지</h2></div><span class="preview-badge">실시간 미리보기</span></div>
+<iframe id="preview" title="관계 카드 미리보기" sandbox="allow-same-origin"></iframe>
+<div class="actions"><button type="button" class="primary" id="copy">HTML 복사</button><button type="button" id="download">카드 HTML 다운로드</button></div>
+<p id="status" role="status" aria-live="polite"></p>
+<details><summary>Markdown에 붙여 넣을 HTML</summary><textarea id="code" readonly aria-label="관계 카드 HTML" spellcheck="false"></textarea></details>
+<p class="hint">Typora나 마크다운 편집기 원문에 코드 블록 없이 HTML을 붙여 넣으세요. 사진도 HTML에 포함됩니다. 문서 테마에 따라 표시가 달라질 수 있습니다.</p>
+</section></main></body></html>
