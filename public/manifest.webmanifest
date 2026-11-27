@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "initSimX Markdown Editor",
+  "short_name": "initSimX",
+  "description": "내 컴퓨터의 문서를 편집하는 로컬 Markdown 작업 공간",
+  "lang": "ko-KR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#111116",
+  "theme_color": "#111116",
+  "icons": [
+    {"src": "/favicon.ico", "sizes": "48x48 64x64", "type": "image/x-icon", "purpose": "any"},
+    {"src": "/미니멀-네온-단축아이콘.png", "sizes": "any", "type": "image/png", "purpose": "any"},
+    {"src": "/대표-이미지.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
