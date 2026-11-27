@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>initSimX Markdown Editor</title>
+
+
+    <meta name="theme-color" content="#111116">
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #111116;
+            color: #eeeef4;
+            font: 15px/1.55 "Paperlogy", "Malgun Gothic", sans-serif
+        }
+
+        button, input, select, textarea {
+            font: inherit;
+            color: inherit
+        }
+
+        button, select {
+            background: #292933;
+            border: 1px solid #454552;
+            border-radius: 7px;
+            padding: 7px 10px;
+            cursor: pointer
+        }
+
+        button:hover, select:hover {
+            border-color: #a78bfa
+        }
+
+        button:disabled {
+            opacity: .45;
+            cursor: default
+        }
+
+        header {
+            height: 56px;
+            border-bottom: 1px solid #30303b;
+            display: flex;
+            align-items: center;
+            padding: 0 18px;
+            gap: 14px
+        }
+
+        header a {
+            color: #c4b5fd;
+            text-decoration: none
+        }
+
+        header strong {
+            font-size: 16px
+        }
+
+        .status {
+            margin-left: auto;
+            color: #b7b7c2;
+            font-size: 12px
+        }
+
+        .app {
+            height: calc(100vh - 56px);
+            display: grid;
+            grid-template-columns:260px minmax(0, 1fr);
+            transition: grid-template-columns .2s
+        }
+
+        .app.sidebar-off {
+            grid-template-columns:0 minmax(0, 1fr)
+        }
+
+        aside {
+            overflow: auto;
+            border-right: 1px solid #30303b;
+            padding: 13px;
+            min-width: 0;
+            transition: padding .2s
+        }
+
+        .sidebar-off aside {
+            padding-left: 0;
+            padding-right: 0;
+            overflow: hidden;
+            border: 0
+        }
+
+        .sidehead {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px
+        }
+
+        input {
+            min-width: 0;
+            background: #1c1c24;
+            border: 1px solid #41414d;
+            border-radius: 7px;
+            padding: 8px
+        }
+
+        .sidehead input {
+            width: 100%
+        }
+
+        .file-create {
+            width: 100%;
+            margin: 0 0 8px;
+            text-align: left
+        }
+
+        .tree {
+            font-size: 14px
+        }
+
+        summary {
+            cursor: pointer;
+            color: #cbc8d4;
+            padding: 5px 2px
+        }
+
+        .file {
+            display: block;
+            width: 100%;
+            text-align: left;
+            border: 0;
+            background: transparent;
+            padding: 7px;
+            border-radius: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .file.active, .file:hover {
+            background: #292633;
+            color: #ddd0ff
+        }
+
+        .hit {
+            padding: 8px;
+            border-bottom: 1px solid #30303b;
+            cursor: pointer;
+            font-size: 13px;
+            overflow-wrap: anywhere
+        }
+
+        .hit small {
+            display: block;
+            color: #aaa;
+            margin-top: 3px
+        }
+
+        .workspace {
+            min-width: 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column
+        }
+
+        .toolbar {
+            min-height: 52px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            border-bottom: 1px solid #30303b;
+            flex-wrap: wrap
+        }
+
+        .filename {
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 100px;
+            max-width: 250px;
+            margin-right: auto
+        }
+
+        .modebar {
+            display: flex;
+            gap: 3px;
+            padding: 3px;
+            background: #1c1c24;
+            border: 1px solid #34343f;
+            border-radius: 9px
+        }
+
+        .modebar button {
+            border: 0;
+            background: transparent;
+            padding: 5px 9px;
+            font-size: 13px
+        }
+
+        .modebar button.active {
+            background: #373443;
+            color: #e3d8ff
+        }
+
+        .toolbar select {
+            padding: 6px
+        }
+
+        .toolbar .aux {
+            font-size: 13px
+        }
+
+        .stage {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            background: #202027;
+            overflow: auto
+        }
+
+        .pane {
+            height: 100%;
+            min-height: 0;
+            overflow: auto;
+            box-sizing: border-box
+        }
+
+        .reader-pane, .visual-pane {
+            display: none
+        }
+
+        .mode-read .reader-pane, .mode-visual .visual-pane {
+            display: block
+        }
+
+        .mode-source .source-pane {
+            display: block
+        }
+
+        .mode-split .source-pane, .mode-split .reader-pane {
+            display: block
+        }
+
+        .stage.mode-split {
+            display: grid;
+            grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)
+        }
+
+        .mode-split .source-pane {
+            border-right: 1px solid #393943
+        }
+
+        .source-pane {
+            display: none
+        }
+
+        .edit {
+            display: block;
+            width: 100%;
+            height: 100%;
+            resize: none;
+            border: 0;
+            outline: none;
+            background: #17171e;
+            color: #e7e5ed;
+            padding: 28px clamp(18px, 4vw, 56px);
+            font: 14px/1.75 Consolas, "Malgun Gothic", monospace;
+            tab-size: 2;
+            white-space: pre;
+            overflow: auto
+        }
+
+        .reader-pane {
+            padding: 38px 20px;
+            background: #24242b
+        }
+
+        .reader {
+            --doc-width: 820px;
+            width: min(var(--doc-width), 100%);
+            margin: 0 auto;
+            background: #fff;
+            color: #333;
+            padding: 52px clamp(24px, 6vw, 72px);
+            border-radius: 5px;
+            box-shadow: 0 8px 30px #0003;
+            min-height: 80vh;
+            font-family: "Paperlogy", "Malgun Gothic", sans-serif;
+            font-size: 16px;
+            line-height: 1.85;
+            overflow-wrap: anywhere
+        }
+
+        .reader.theme-dark, .visual.theme-dark {
+            background: #25252b;
+            color: #e7e5ed;
+            color-scheme: dark
+        }
+
+        .reader.theme-light, .visual.theme-light {
+            background: #fff;
+            color: #333;
+            color-scheme: light
+        }
+
+        .reader.theme-dark, .visual.theme-dark { color:#e7e5ed; }
+        .reader.theme-dark :not([style*="color:"]),
+        .visual.theme-dark :not([style*="color:"]) { color: inherit; }
+        .reader.theme-dark pre, .visual.theme-dark pre { background:#1b1b20 !important; color:#e7e5ed !important; border:1px solid #45454f; }
+        .reader.theme-dark pre code, .visual.theme-dark pre code,
+        .reader.theme-dark code, .visual.theme-dark code { background:#303039 !important; color:#e7e5ed !important; }
+        .reader.theme-dark .vditor-reset, .visual.theme-dark .vditor-reset { color:#e7e5ed !important; }
+        .reader.theme-dark .vditor-reset *, .visual.theme-dark .vditor-reset * { color:inherit; }
+        .reader.theme-dark .vditor-reset pre, .visual.theme-dark .vditor-reset pre { background:#1b1b20 !important; color:#e7e5ed !important; }
+        .reader.theme-dark .vditor-reset pre code, .visual.theme-dark .vditor-reset pre code,
+        .reader.theme-dark .vditor-reset code:not(.hljs), .visual.theme-dark .vditor-reset code:not(.hljs) { background:#303039 !important; color:#e7e5ed !important; }
+        .reader.theme-dark a, .visual.theme-dark a { color:#b9caff; }
+        .reader.theme-dark .vditor-reset a, .visual.theme-dark .vditor-reset a { color:#b9caff; }
+        .reader.theme-dark table th, .reader.theme-dark table td,
+        .visual.theme-dark table th, .visual.theme-dark table td { border-color:#555560; }
+        .visual.theme-dark .vditor-preview { background:#25252b !important; color:#e7e5ed !important; }
+        .reader.theme-light, .visual.theme-light { color:#29292e; }
+        .reader.theme-light .vditor-reset, .visual.theme-light .vditor-reset { color:#29292e !important; }
+        .reader.theme-light .vditor-reset pre, .visual.theme-light .vditor-reset pre { background:#f0f0f2 !important; color:#29292e !important; border:1px solid #dedee3; }
+        .reader.theme-light .vditor-reset pre code, .visual.theme-light .vditor-reset pre code,
+        .reader.theme-light .vditor-reset code:not(.hljs), .visual.theme-light .vditor-reset code:not(.hljs) { background:#e9e9ed !important; color:#303038 !important; }
+
+        .visual-pane {
+            padding: 38px 20px;
+            background: #24242b;
+            box-sizing: border-box
+        }
+
+        .visual {
+            width: min(var(--doc-width, 820px), 100%);
+            height: 100%;
+            min-height: 0;
+            margin: 0 auto;
+            padding: 52px clamp(24px, 6vw, 72px);
+            border-radius: 5px;
+            box-shadow: 0 8px 30px #0003;
+            outline: none;
+            overflow-wrap: anywhere;
+            box-sizing: border-box
+        }
+
+        .visual > .vditor {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            border: 0;
+            background: transparent
+        }
+        .visual .vditor-toolbar { display: none }
+        .visual .vditor-content { background: transparent }
+        .visual .vditor-preview__action { display: none }
+        .visual.theme-dark .vditor-preview { background:#25252b !important; color:#e7e5ed !important; }
+        .visual.theme-dark .vditor-preview .vditor-reset,
+        .visual.theme-dark .vditor-preview .vditor-reset * { color:#e7e5ed !important; }
+        .visual.theme-dark .vditor-preview .vditor-reset a { color:#b9caff !important; }
+        .visual.theme-dark .vditor-preview .vditor-reset pre,
+        .visual.theme-dark .vditor-preview .vditor-reset pre code { background:#1b1b20 !important; color:#e7e5ed !important; border-color:#45454f !important; }
+        .visual.theme-dark .vditor-preview .vditor-reset code:not(.hljs) { background:#303039 !important; color:#e7e5ed !important; }
+        .visual.theme-dark .vditor-preview .vditor-reset table th,
+        .visual.theme-dark .vditor-preview .vditor-reset table td { border-color:#555560 !important; }
+        .visual.theme-light .vditor-preview { background:#fff !important; color:#29292e !important; }
+        .visual.theme-light .vditor-preview .vditor-reset,
+        .visual.theme-light .vditor-preview .vditor-reset * { color:#29292e !important; }
+        .visual.theme-light .vditor-preview .vditor-reset pre,
+        .visual.theme-light .vditor-preview .vditor-reset pre code { background:#f0f0f2 !important; color:#29292e !important; border-color:#dedee3 !important; }
+        .visual.theme-light .vditor-preview .vditor-reset code:not(.hljs) { background:#e9e9ed !important; color:#303038 !important; }
+
+        .visual:focus {
+            box-shadow: 0 8px 30px #0003, 0 0 0 2px #9d83ef
+        }
+
+        .visual-notice {
+            display: none;
+            margin: 0 auto 14px;
+            max-width: 820px;
+            padding: 10px 14px;
+            border: 1px solid #8b6f35;
+            border-radius: 8px;
+            background: #382f1f;
+            color: #f2d99b;
+            font-size: 13px
+        }
+        .visual-notice.visible { display: block }
+
+        .reader img, .visual img {
+            max-width: 100%;
+            height: auto
+        }
+
+        .reader table, .visual table {
+            max-width: 100%;
+            border-collapse: collapse;
+            display: block;
+            overflow-x: auto
+        }
+
+        .reader pre, .visual pre, .reader code, .visual code {
+            font-family: Consolas, "Cascadia Code", monospace
+        }
+
+        .reader pre, .visual pre {
+            padding: 16px 18px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            overflow-x: auto
+        }
+
+        .reader code, .visual code {
+            overflow-wrap: anywhere;
+            word-break: break-word
+        }
+
+        .reader blockquote, .visual blockquote {
+            margin-left: 0;
+            padding-left: 18px;
+            border-left: 4px solid #aaa
+        }
+
+        .reader iframe, .visual iframe {
+            max-width: 100%
+        }
+
+        .empty {
+            color: #777;
+            text-align: center;
+            margin-top: 28vh
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: #0009;
+            display: none;
+            place-items: center;
+            z-index: 5
+        }
+
+        .dialog {
+            background: #202027;
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 22px;
+            max-width: 640px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: auto
+        }
+
+        .dialog h2 {
+            margin-top: 0
+        }
+
+        .dialog p {
+            color: #aaa
+        }
+
+        .conflict {
+            border: 1px solid #a87936;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px
+        }
+
+        .width-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #b7b7c2
+        }
+
+        .width-control input {
+            width: 90px;
+            padding: 4px
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #9895a3;
+            margin-left: 8px
+        }
+
+        @media (max-width: 900px) {
+            .app {
+                grid-template-columns:220px minmax(0, 1fr)
+            }
+
+            .filename {
+                max-width: 150px
+            }
+        }
+
+        @media (max-width: 650px) {
+            header {
+                padding: 0 10px
+            }
+
+            .app {
+                grid-template-columns:190px minmax(0, 1fr)
+            }
+
+            .app.sidebar-off {
+                grid-template-columns:0 minmax(0, 1fr)
+            }
+
+            aside {
+                padding: 9px
+            }
+
+            .toolbar {
+                gap: 5px;
+                padding: 7px
+            }
+
+            .filename {
+                flex-basis: 40%;
+                margin-right: auto
+            }
+
+            .modebar {
+                order: 3
+            }
+
+            .toolbar select {
+                order: 4
+            }
+
+            .toolbar .aux {
+                order: 5
+            }
+
+            .stage.mode-split {
+                display: flex;
+                flex-direction: column
+            }
+
+            .mode-split .pane {
+                height: 50%
+            }
+
+            .mode-split .source-pane {
+                border-right: 0;
+                border-bottom: 1px solid #393943
+            }
+
+            .reader-pane, .visual-pane {
+                padding: 14px 8px
+            }
+
+            .reader, .visual {
+                padding: 28px 20px
+            }
+
+            .visual .vditor-content {
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto
+            }
+            .visual .vditor-sv,
+            .visual .vditor-preview {
+                flex: 1 0 320px;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0
+            }
+
+            .hint {
+                display: none
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/vendor/vditor/dist/index.css">
+    <link rel="stylesheet" href="/style.css?v=3">
+    <link rel="stylesheet" href="/base.user.css?v=3">
+<link rel="stylesheet" href="/site.css"><link rel="stylesheet" href="/editor/editor.css"></head>
+<body>
+<header class="site-header"><a class="brand" href="/">◈ initSimX</a><nav class="site-nav" aria-label="주 메뉴"><a href="/editor/" aria-current="page">마크다운 편집기</a><a href="/helper/프로필_생성기.html" target="_blank" rel="noopener">프로필 생성기</a><a href="/helper/프로필카드_생성기.html" target="_blank" rel="noopener">카드 미리보기</a></nav><button id="connect">로컬 폴더 연결</button><span class="status" id="status" role="status">준비 중…</span></header>
+<div class="app" id="app">
+    <aside>
+        <div class="sidehead"><input id="search" placeholder="파일·내용 검색">
+            <button id="refresh" title="새로고침">↻</button>
+        </div>
+        <button class="file-create" id="demo">예시 문서로 둘러보기</button>
+        <button class="file-create" id="createFile">＋ 새 Markdown 파일</button>
+        <div class="tree" id="tree"></div>
+        <div id="results"></div>
+        <hr>
+        <p>문서는 선택한 PC 폴더에 저장됩니다. 저장 전 사본은 .initsimx-backups 폴더에 보관됩니다.</p><button id="download">편집 내용 내려받기</button>
+    </aside>
+    <main class="workspace">
+        <div class="toolbar">
+            <button id="sidebarToggle" title="사이드바 접기">☰</button>
+            <span class="filename" id="filename">파일을 선택하세요</span>
+            <button disabled id="renameFile" title="선택한 파일 이름 변경">이름 변경</button>
+            <button disabled id="deleteFile" title="선택한 파일 삭제">삭제</button>
+            <div aria-label="보기 모드" class="modebar" role="group">
+                <button class="active" data-mode="read">읽기</button>
+                <button data-mode="visual">Markdown 편집</button>
+                <button data-mode="source">소스</button>
+                <button data-mode="split">소스+미리보기</button>
+            </div>
+            <label class="width-control" title="문서 폭">폭 <input id="docWidth" max="1100" min="620" step="20" type="range" value="820"></label>
+            <label class="width-control" title="글자 크기">
+                글자
+                <input
+                        id="fontSize"
+                        type="range"
+                        min="12"
+                        max="28"
+                        step="1"
+                        value="16"
+                >
+                <span id="fontSizeValue">16px</span>
+            </label>
+            <select aria-label="문서 테마" id="theme">
+            <option value="less-light">Less · 라이트</option>
+            <option value="less-dark">Less · 다크</option>
+        </select>
+            <button disabled id="save">저장</button>
+        </div>
+        <div class="stage mode-read" id="stage">
+            <div class="pane source-pane"><textarea class="edit" disabled id="text" placeholder="왼쪽에서 Markdown 파일을 선택하세요" spellcheck="false"></textarea></div>
+            <div class="pane reader-pane">
+                <article class="reader" id="reader"><p class="empty">왼쪽에서 문서를 선택하세요</p></article>
+            </div>
+            <div class="pane visual-pane">
+                <div class="visual" id="visual"><div id="markdownEditor"></div><div class="editor-preview" id="visualPreview"></div></div>
+            </div>
+        </div>
+    </main>
+</div>
+<div class="modal" id="modal">
+    <div class="dialog"><h2>동기화 결과</h2>
+        <p>파일을 복사할 때 삭제는 전파하지 않습니다. 서로 다른 변경이 있는 파일은 그대로 두었습니다.</p>
+        <div id="syncResult"></div>
+        <button id="closeModal">닫기</button>
+    </div>
+</div>
+
+<script src="/vendor/vditor/dist/js/lute/lute.min.js"></script><script src="/local-files.js"></script><script src="/vendor/vditor/dist/index.min.js"></script>
+<script>
+    const $ = id => document.getElementById(id);
+    let demoMode=false;
+    let csrf = '', files = [], current = null, baseHash = null, dirty = false, timer = null, mode = 'read', visualChanged = false, rawHTML = false, renderTimer = null, vditor = null;
+
+    const uiModal = document.createElement('div');
+    uiModal.className = 'ui-modal';
+    uiModal.innerHTML = '<section class="ui-dialog" role="dialog" aria-modal="true" aria-labelledby="uiTitle"><div class="ui-icon">✦</div><h2 id="uiTitle"></h2><p class="ui-message"></p><input class="ui-input" hidden><div class="ui-actions"><button class="ui-cancel">취소</button><button class="ui-ok">확인</button></div></section>';
+    document.body.append(uiModal);
+    const uiStyle = document.createElement('style');
+    uiStyle.textContent = '.ui-modal{position:fixed;inset:0;z-index:1000;display:none;place-items:center;padding:20px;background:#08080dbb;backdrop-filter:blur(7px)}.ui-modal.open{display:grid;animation:uiFade .16s ease-out}@keyframes uiFade{from{opacity:0}to{opacity:1}}.ui-dialog{width:min(430px,100%);padding:26px;background:#202029;border:1px solid #454552;border-radius:18px;box-shadow:0 24px 80px #0009;animation:uiPop .18s ease-out}@keyframes uiPop{from{transform:translateY(8px) scale(.98)}to{transform:none}}.ui-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#a78bfa20;color:#c4b5fd;font-size:21px}.ui-dialog h2{margin:14px 0 6px;font-size:19px}.ui-message{margin:0;color:#b8b8c6;white-space:pre-wrap;overflow-wrap:anywhere}.ui-input{width:100%;margin-top:16px;padding:10px 12px;background:#15151c;border:1px solid #454552;border-radius:9px;outline:none}.ui-input:focus{border-color:#a78bfa}.ui-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}.ui-actions button{min-width:82px}.ui-actions .ui-ok{background:#a78bfa;color:#17131f;border-color:transparent;font-weight:700}.ui-actions .ui-danger{background:#d1788b;color:#1b1115;border-color:transparent;font-weight:700}';
+    document.head.append(uiStyle);
+    function dialog({title='알림', message='', kind='alert', value='', danger=false}={}) {
+        return new Promise(resolve => {
+            const input=uiModal.querySelector('.ui-input'), ok=uiModal.querySelector('.ui-ok'), cancel=uiModal.querySelector('.ui-cancel');
+            uiModal.querySelector('#uiTitle').textContent=title;
+            uiModal.querySelector('.ui-message').textContent=message;
+            input.hidden=kind!=='prompt'; input.value=value;
+            cancel.hidden=kind==='alert'; ok.textContent=kind==='alert'?'확인':kind==='confirm'?'계속':'저장'; ok.classList.toggle('ui-danger',danger);
+            uiModal.classList.add('open');
+            const done=result=>{uiModal.classList.remove('open');ok.onclick=cancel.onclick=null;uiModal.onkeydown=null;resolve(result)};
+            ok.onclick=()=>done(kind==='prompt'?input.value:kind==='confirm'?true:true); cancel.onclick=()=>done(kind==='prompt'?null:false);
+            uiModal.onclick=e=>{if(e.target===uiModal)done(kind==='prompt'?null:false)};
+            uiModal.onkeydown=e=>{if(e.key==='Escape')done(kind==='prompt'?null:false);if(e.key==='Enter'&&e.target!==document.body){e.preventDefault();ok.click()}};
+            setTimeout(()=>kind==='prompt'?input.focus():ok.focus(),0);
+        });
+    }
+    const notify=(message,title='알림')=>dialog({title,message,kind:'alert'});
+    const confirmUI=(message,title='확인',danger=false)=>dialog({title,message,kind:'confirm',danger});
+    const promptUI=(message,value,title='이름 입력')=>dialog({title,message,value,kind:'prompt'});
+
+    const localFiles = new LocalFiles();
+    const api = (url, opts) => localFiles.request(url, opts);
+    $('connect').onclick = async () => {
+        if (!window.showDirectoryPicker || !window.isSecureContext) { await notify('HTTPS 또는 localhost의 Chrome/Edge에서 열어 주세요.'); return; }
+        if (!(await flushPendingChanges())) return;
+        try { await localFiles.connect();clearTimeout(renderTimer);++renderVersion;demoMode=false;current=null; baseHash=null; dirty=false; visualChanged=false;
+            $('text').value=''; $('text').disabled=true; $('save').disabled=true; $('renameFile').disabled=true; $('deleteFile').disabled=true;
+            $('filename').textContent=localFiles.root.name; $('reader').replaceChildren();
+            if(vditor && editorReady)vditor.setValue('',true);
+            render(); $('createFile').disabled=false; await loadTree(); status('연결됨 · '+localFiles.root.name);
+        } catch(e) { if(e.name!=='AbortError')status(e.message); }
+    };
+    $('demo').onclick=async()=>{
+        if(save.busy)return;
+        if(dirty && !await confirmUI('편집 중인 내용을 버리고 예시 문서를 열까요?'))return;
+        clearTimeout(timer);
+        const response=await fetch('/example.md');if(!response.ok)return;
+        demoMode=true;current='예시 문서.md';baseHash=null;dirty=false;visualChanged=false;
+        $('text').value=await response.text();$('text').disabled=false;$('filename').textContent='예시 문서 · PC 저장 없음';
+        $('save').disabled=true;$('renameFile').disabled=true;$('deleteFile').disabled=true;
+        if(mode==='visual')ensureVditor($('text').value);
+        render();status('예시 문서 · 파일을 수정하지 않습니다.');
+    };
+    $('download').onclick=()=>{const blob=new Blob([$('text').value],{type:'text/markdown;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=current?.split('/').pop()||'복구 메모.md';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+    window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+
+    function status(s) {
+        $('status').textContent = s
+    }
+
+    function setMode(next) {
+        if (visualChanged && !commitVisual()) return;
+        if(next === 'visual' && current) ensureVditor($('text').value);
+        mode = next;
+        $('stage').className = 'stage mode-' + mode;
+        document.querySelectorAll('.modebar button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+        applyTheme();
+        if (vditor && editorReady) {
+            if (mode === 'visual') vditor.enable();
+            else vditor.disabled()
+        }
+        render();
+        localStorage.setItem('aichat-editor-mode', mode)
+    }
+
+    function setWidth(v) {
+        document.querySelectorAll('.reader,.visual').forEach(e => e.style.setProperty('--doc-width', v + 'px'));
+        localStorage.setItem('aichat-doc-width', v)
+    }
+
+    async function init() {
+        csrf = (await api('/api/session')).csrf;
+        $('createFile').disabled = !localFiles.root;
+        $('docWidth').value = localStorage.getItem('aichat-doc-width') || 820;
+        setWidth($('docWidth').value);
+        await loadTree();
+        setMode('read'); status('로컬 폴더를 연결해 시작하세요 · 문서 업로드 없음')
+    }
+
+    async function loadTree() {
+        const d = await api('/api/tree');
+        files = d.files;
+        const root = Object.create(null);
+        files.forEach(f => {
+            let n = root;
+            const p = f.path.split('/');
+            p.forEach((part, i) => {
+                if (i === p.length - 1) n[part] = f; else n = n[part] ??= Object.create(null)
+            })
+        });
+        let box = $('tree');
+        box.replaceChildren();
+        const draw = (obj, prefix = '') => Object.keys(obj).sort((a, b) => a.localeCompare(b, 'ko')).forEach(k => {
+            const v = obj[k], path = prefix ? prefix + '/' + k : k;
+            if (v.path) {
+                const b = document.createElement('button');
+                b.className = 'file' + (current === v.path ? ' active' : '');
+                b.textContent = '📄 ' + k;
+                b.title = v.path;
+                b.onclick = () => openFile(v.path);
+                box.append(b)
+            } else {
+                const d = document.createElement('details');
+                d.open = true;
+                const s = document.createElement('summary');
+                s.textContent = '📁 ' + k;
+                d.append(s);
+                const child = document.createElement('div');
+                child.style.paddingLeft = '12px';
+                d.append(child);
+                box.append(d);
+                const tmp = box;
+                box = child;
+                draw(v, path);
+                box = tmp
+            }
+        });
+        draw(root)
+    }
+
+    async function openFile(path) {
+        if(save.busy){status('저장이 끝난 뒤 파일을 열어 주세요.');return;}
+        if (dirty && !await confirmUI('저장되지 않은 내용을 버리고 파일을 바꿀까요?', '변경 내용 확인', true)) return;
+        clearTimeout(timer);
+        const d = await api('/api/file?path=' + encodeURIComponent(path));
+        demoMode=false;current = path;
+        baseHash = d.hash;
+        dirty = false;
+        rawHTML = containsHTML(d.content);
+        $('text').value = d.content;
+        $('text').disabled = false;
+        $('save').disabled = false;
+        $('renameFile').disabled = false;
+        $('deleteFile').disabled = false;
+        $('filename').textContent = path;
+        visualChanged = false;
+        status('저장됨');
+        await loadTree();
+        if(mode==='visual')ensureVditor(d.content);
+        render()
+    }
+
+    let editorReady=false, pendingEditorValue='';
+    function ensureVditor(value) {
+        pendingEditorValue=value;
+        if (vditor) {
+            if(editorReady && vditor.getValue() !== value) vditor.setValue(value, true);
+            return
+        }
+        vditor = new Vditor('markdownEditor', {
+            cdn: '/vendor/vditor',
+            lang: 'ko_KR',
+            mode: 'sv',
+            theme: $('theme').value === 'less-dark' ? 'dark' : 'classic',
+            height: '100%',
+            minHeight: 0,
+            toolbar: [],
+            cache: {enable: false},
+            value,
+            preview: {
+                mode: 'editor',
+                markdown: {sanitize: true},
+                theme: {current: $('theme').value === 'less-dark' ? 'dark' : 'light', path: '/vendor/vditor/dist/css/content-theme'},
+                hljs: {style: $('theme').value === 'less-dark' ? 'github-dark' : 'github'}
+            },
+            input: markdown => {
+                $('text').value = markdown;
+                visualChanged = true;
+                dirty = true;
+                scheduleRender();
+                status('수정됨 · Vditor Markdown 저장 대기');
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    $('text').value = vditor.getValue();
+                    visualChanged = false;
+                    save()
+                }, 900)
+            },
+            after: () => {
+                editorReady=true;
+                if(vditor.getValue()!==pendingEditorValue)vditor.setValue(pendingEditorValue,true);
+                vditor.setPreviewMode('editor');
+                applyTheme();
+                status('편집기 준비됨');
+                if (mode === 'visual') vditor.enable();
+                else vditor.disabled()
+            }
+        })
+    }
+
+    function bindVditorScrollSync() {
+        const host = $('visual');
+        const source = host.querySelector('.vditor-sv');
+        const preview = host.querySelector('.vditor-preview');
+        if (!source || !preview || source.dataset.scrollSync === '1') return;
+        source.dataset.scrollSync = '1';
+        let syncing = false;
+        const syncPreview = () => {
+            if (syncing || mode !== 'visual') return;
+            syncing = true;
+            const sourceRange = source.scrollHeight - source.clientHeight;
+            const previewRange = preview.scrollHeight - preview.clientHeight;
+            const ratio = sourceRange > 0 ? source.scrollTop / sourceRange : 0;
+            preview.scrollTop = Math.max(0, ratio * previewRange);
+            requestAnimationFrame(() => { syncing = false; });
+        };
+        source.addEventListener('scroll', syncPreview, {passive:true});
+        source.addEventListener('keyup', syncPreview);
+        source.addEventListener('click', syncPreview);
+        source.addEventListener('input', () => requestAnimationFrame(syncPreview));
+    }
+
+    function esc(s) {
+        return s.replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]))
+    }
+
+    function containsHTML(source) {
+        let fenced = false;
+        return source.split(/\r?\n/).some(line => {
+            if (/^\s*```/.test(line)) { fenced = !fenced; return false }
+            return !fenced && /<\/?[a-z][a-z0-9-]*(?:\s[^<>]*?)?\s*\/?\s*>/i.test(line)
+        })
+    }
+
+    function inline(s) {
+        // 렌더러가 아는 인라인 HTML 태그는 보존하고, 나머지 텍스트는 계속 이스케이프한다.
+        const allowed = /^(?:\/?(?:img|span|a|br|strong|b|em|i|u|s|small|sup|sub|code|mark|kbd|label)(?:\s[^<>]*?)?\s*\/?)$/i;
+        const html = s.split(/(<\/?[a-z][a-z0-9-]*(?:\s[^<>]*?)?\s*\/?>)/gi).map(part => part.startsWith('<') && part.endsWith('>') && allowed.test(part.slice(1, -1).trim()) ? part : esc(part)).join('');
+        return html.replace(/!\[([^\]]*)\]\(([^ )]+)\)/g, '<img alt="$1" src="$2">').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\[([^\]]+)\]\((https?:\/\/[^ )]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    }
+
+    function markdownToHTML(src) {
+        const parts = src.split(/\r?\n/), out = [];
+        let para = [], list = '', code = false, codeLines = [];
+        const flush = () => {
+            if (para.length) {
+                out.push('<p>' + para.map(inline).join('<br>') + '</p>');
+                para = []
+            }
+        };
+        for (let i = 0; i < parts.length; i++) {
+            const line = parts[i];
+            if (line.trim().startsWith('```')) {
+                flush();
+                if (!code) {
+                    code = true;
+                    codeLines = []
+                } else {
+                    out.push('<pre><code>' + esc(codeLines.join('\n')) + '</code></pre>');
+                    code = false
+                }
+                continue
+            }
+            if (code) {
+                codeLines.push(line);
+                continue
+            }
+            if (/^\s*<(?:div|table|section|article|details|figure|header|footer|nav|main|aside|blockquote|pre|ul|ol|h[1-6])(?:\s|>)/i.test(line)) {
+                flush();
+                const raw = [line];
+                while (i + 1 < parts.length && parts[i + 1].trim()) raw.push(parts[++i]);
+                out.push(raw.join('\n'));
+                continue
+            }
+            const h = line.match(/^(#{1,6})\s+(.+)/);
+            if (h) {
+                flush();
+                out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`)
+            } else if (/^\s*([-*])\s+/.test(line)) {
+                flush();
+                if (!list) {
+                    list = 'ul';
+                    out.push('<ul>')
+                }
+                out.push('<li>' + inline(line.replace(/^\s*[-*]\s+/, '')) + '</li>')
+            } else {
+                if (list) {
+                    out.push('</ul>');
+                    list = ''
+                }
+                if (!line.trim()) flush(); else para.push(line)
+            }
+        }
+        flush();
+        if (list) out.push('</ul>');
+        if (code) out.push('<pre><code>' + esc(codeLines.join('\n')) + '</code></pre>');
+        return out.join('') || '<p>내용이 없습니다</p>'
+    }
+
+    let appliedEditorTheme=null;
+    function applyTheme() {
+        const dark=$('theme').value==='less-dark';
+        $('stage').dataset.theme=dark?'dark':'light';
+        for(const id of ['reader','visual']) {
+            $(id).classList.toggle('theme-dark',dark);
+            $(id).classList.toggle('theme-light',!dark);
+        }
+        if(vditor && editorReady && appliedEditorTheme!==dark){vditor.setTheme(dark?'dark':'classic',dark?'dark':'light',dark?'github-dark':'github','/vendor/vditor/dist/css/content-theme');appliedEditorTheme=dark;}
+    }
+    const themeCache=new Map();
+    async function documentCSS(theme){
+        if(!themeCache.has(theme))themeCache.set(theme,Promise.all(['/themes/'+theme+'.css','/style.css','/base.user.css'].map(async path=>{const response=await fetch(path);if(!response.ok)throw Error('문서 스타일을 불러올 수 없습니다: '+path);return response.text();})).then(parts=>parts.join('\n')).catch(error=>{themeCache.delete(theme);throw error;}));
+        return themeCache.get(theme);
+    }
+    let renderVersion=0, previewURLs=[];
+    function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(render,150);}
+    async function render() {
+        applyTheme();
+        const version=++renderVersion;
+        if(!current){
+            previewURLs.forEach(URL.revokeObjectURL);previewURLs=[];
+            for(const id of ['reader','visualPreview']){$(id).replaceChildren();const hint=document.createElement('p');hint.className='empty';hint.textContent='로컬 폴더를 연결하거나 예시 문서를 열어 주세요.';$(id).append(hint);}
+            return;
+        }
+        try {
+            const css=await documentCSS($('theme').value);
+            const doc=new DOMParser().parseFromString(Lute.New().Md2HTML($('text').value),'text/html');
+            doc.querySelectorAll('script,iframe,object,embed,link,meta,base,form').forEach(node=>node.remove());
+            const urls=[];
+            for(const img of doc.querySelectorAll('img')){
+                img.removeAttribute('srcset');
+                const src=img.getAttribute('src')||'';
+                if(src.startsWith('data:image/'))continue;
+                try {
+                    if(/^[a-z]+:|^\/\//i.test(src))throw Error();
+                    const parts=current.split('/').slice(0,-1);
+                    for(const p of decodeURIComponent(src).split('/')){if(p==='..'){if(!parts.length)throw Error();parts.pop();}else if(p&&p!=='.')parts.push(p);}
+                    const url=URL.createObjectURL(await(await localFiles.file(parts.join('/'))).getFile());urls.push(url);img.src=url;
+                }catch{img.removeAttribute('src');}
+            }
+            if(version!==renderVersion){urls.forEach(URL.revokeObjectURL);return;}
+            const oldURLs=previewURLs;previewURLs=urls;
+            const override=`:root{--font-size:${$('fontSize').value}px;--doc-font-size:${$('fontSize').value}px;--font-family:var(--app-font)}html,body{margin:0;min-height:100%;background:var(--bg-contents);color:var(--color-text)}#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin:0 auto;padding:40px clamp(20px,5vw,64px);min-height:100vh;font-size:var(--doc-font-size);font-family:var(--app-font);overflow-wrap:anywhere}img{max-width:100%;height:auto}pre{white-space:pre-wrap}table{max-width:100%}#write pre{overflow-x:auto}`;
+            const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob:; style-src \'unsafe-inline\'; font-src \'none\'; form-action \'none\'; base-uri \'none\'"><style>'+css.replace(/<\/style/gi,'<\\/style')+'\n'+override+'</style></head><body><article id="write" class="reader">'+doc.body.innerHTML+'</article></body></html>';
+            for(const id of [mode==='visual'?'visualPreview':'reader']){
+                const host=$(id);const old=host.querySelector('iframe');
+                const frame=document.createElement('iframe');frame.title=id==='reader'?'문서 미리보기':'편집 미리보기';frame.setAttribute('sandbox','allow-same-origin');
+                // Same-origin permits parent scroll control; scripts remain prohibited by sandbox and CSP.
+                const scroll=old?.contentDocument?.scrollingElement?.scrollTop||0;
+                frame.onload=()=>{const d=frame.contentDocument;d.scrollingElement.scrollTop=scroll;d.addEventListener('click',event=>{const link=event.target.closest('a');if(!link)return;const href=link.getAttribute('href')||'';event.preventDefault();if(href.startsWith('#'))d.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView();});};
+                frame.srcdoc=html;host.replaceChildren(frame);
+            }
+            setTimeout(()=>oldURLs.forEach(URL.revokeObjectURL),1000);
+        }catch(error){status('미리보기 오류: '+error.message);}
+    }
+
+    function htmlToMarkdown(root) {
+        let out = '';
+
+        function walk(n) {
+            if (n.nodeType === 3) return n.nodeValue;
+            if (n.nodeType !== 1) return '';
+            const c = [...n.childNodes].map(walk).join(''), tag = n.tagName.toLowerCase();
+            if (/^h[1-6]$/.test(tag)) return '\n' + '#'.repeat(+tag[1]) + ' ' + c + '\n\n';
+            if (tag === 'p' || tag === 'div') return c + '\n\n';
+            if (tag === 'br') return '\n';
+            if (tag === 'strong' || tag === 'b') return '**' + c + '**';
+            if (tag === 'em' || tag === 'i') return '*' + c + '*';
+            if (tag === 'code' && n.parentElement.tagName !== 'PRE') return '`' + c + '`';
+            if (tag === 'pre') return '```\n' + n.innerText + '\n```\n\n';
+            if (tag === 'li') return '- ' + c + '\n';
+            if (tag === 'ul' || tag === 'ol') return c + '\n';
+            if (tag === 'a') return '[' + c + '](' + n.getAttribute('href') + ')';
+            if (tag === 'img') return '![' + (n.alt || '') + '](' + (n.getAttribute('src') || '') + ')';
+            if (tag === 'blockquote') return c.split('\n').map(x => x ? '> ' + x : x).join('\n') + '\n\n';
+            return n.outerHTML
+        }out = [...root.childNodes].map(walk).join('');
+        return out.trim() + '\n'
+    }
+
+    function commitVisual() {
+        if (!visualChanged) return true;
+        if (vditor) $('text').value = vditor.getValue();
+        visualChanged = false;
+        dirty = true;
+        status('수정됨 · 자동 저장 대기');
+        clearTimeout(timer);
+        timer = setTimeout(save, 900);
+        return true
+    }
+
+    async function save() {
+        if (!current || !dirty) return true;
+        if(demoMode || !localFiles.root){status('예시 편집 중 · 내려받기 또는 폴더 연결로 보관하세요.');return false;}
+        if(save.busy)return false;
+        save.busy=true; const savedPath=current, savedText=$('text').value;
+        status('저장 중…');
+        try {
+            const d = await api('/api/file', {method: 'PUT', body: JSON.stringify({path: savedPath, content: savedText, hash: baseHash})});
+            baseHash = d.hash;
+            dirty = current !== savedPath || $('text').value !== savedText;
+            status('원본에 저장됨 · ' + new Date().toLocaleTimeString());
+            loadTree();
+            return true
+        } catch (e) {
+            if (e.status === 409) {
+                status('충돌 감지 · 현재 편집 내용 보존');
+                notify('원본 파일이 다른 곳에서 바뀌어 저장을 중단했습니다. 현재 편집 내용은 그대로 남아 있습니다. 내용을 복사해 둔 뒤 파일을 다시 열어 변경 내용을 합쳐 주세요.', '저장 충돌')
+            } else status('저장 실패: ' + e.message);
+            return false
+        } finally { save.busy=false; }
+    }
+
+    async function flushPendingChanges() {
+        clearTimeout(timer);
+        if (visualChanged && vditor && editorReady) {
+            $('text').value = vditor.getValue();
+            visualChanged = false;
+            dirty = true
+        }
+        if(dirty && demoMode){if(!await confirmUI('예시 문서의 변경 내용을 버리고 계속할까요?'))return false;dirty=false;}
+        if (dirty && !(await save())) return false;
+        return !dirty
+    }
+
+    async function createFile() {
+        const suggested = current ? current.split('/').pop().replace(/\.md$/i, '') + ' 새 메모.md' : '새 메모.md';
+        const name = await promptUI('새 Markdown 파일 이름을 입력하세요. .md는 자동으로 붙습니다.', suggested, '새 메모 만들기');
+        if (name === null || !name.trim()) return;
+        if (!(await flushPendingChanges())) return;
+        const parent = current ? current.split('/').slice(0, -1).join('/') : '';
+        try {
+            const d = await api('/api/file/create', {method:'POST', body:JSON.stringify({parent, name})});
+            demoMode=false;current = d.path;
+            baseHash = d.hash;
+            dirty = false;
+            visualChanged = false;
+            rawHTML = false;
+            $('text').value = '';
+            $('text').disabled = false;
+            $('save').disabled = false;
+            $('renameFile').disabled = false;
+            $('deleteFile').disabled = false;
+            $('filename').textContent = current;
+            await loadTree();
+            if(mode==='visual')ensureVditor('');
+            render();
+            status('새 Markdown 파일 생성됨')
+        } catch (e) {
+            status(e.status === 409 ? '같은 이름의 파일이 이미 있습니다' : '파일 생성 실패: ' + e.message)
+        }
+    }
+
+    async function renameFile() {
+        if (!current || demoMode) return;
+        const oldName = current.split('/').pop();
+        const name = await promptUI('새 파일 이름을 입력하세요. 다른 폴더로 이동하지 않습니다.', oldName, '파일 이름 변경');
+        if (name === null || !name.trim() || name.trim() === oldName) return;
+        if (!(await flushPendingChanges())) return;
+        try {
+            const d = await api('/api/file/rename', {method:'POST', body:JSON.stringify({path:current, name, hash:baseHash})});
+            demoMode=false;current = d.path;
+            baseHash = d.hash;
+            $('filename').textContent = current;
+            await loadTree();
+            status('파일 이름을 변경했습니다')
+        } catch (e) {
+            status(e.status === 409 ? (e.data?.error || '파일이 변경되어 작업을 중단했습니다') : '이름 변경 실패: ' + e.message)
+        }
+    }
+
+    async function deleteFile() {
+        if (!current || demoMode) return;
+        const path = current;
+        if (!await confirmUI(`“${path}” 파일을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`, '파일 삭제', true)) return;
+        if (!(await flushPendingChanges())) return;
+        try {
+            await api('/api/file/delete', {method:'POST', body:JSON.stringify({path, hash:baseHash})});
+            current = null;
+            baseHash = null;
+            dirty = false;
+            visualChanged = false;
+            rawHTML = false;
+            $('text').value = '';
+            $('text').disabled = true;
+            $('save').disabled = true;
+            $('renameFile').disabled = true;
+            $('deleteFile').disabled = true;
+            $('filename').textContent = '파일을 선택하세요';
+            if (vditor && editorReady) vditor.setValue('', true);
+            $('reader').innerHTML = '<p class="empty">왼쪽에서 문서를 선택하세요</p>';
+            await loadTree();
+            status('파일을 삭제했습니다');
+            render()
+        } catch (e) {
+            status(e.status === 409 ? (e.data?.error || '파일이 변경되어 삭제를 중단했습니다') : '파일 삭제 실패: ' + e.message)
+        }
+    }
+
+    $('theme').value = localStorage.getItem('aichat-preview-theme') || 'less-light';
+    $('theme').addEventListener('change', () => {
+        localStorage.setItem('aichat-preview-theme', $('theme').value);
+        applyTheme();
+        render()
+    });
+    $('docWidth').oninput = e => {setWidth(e.target.value);render();};
+    $('text').addEventListener('input', () => {
+        dirty = true;
+        status('수정됨 · 자동 저장 대기');
+        scheduleRender();
+        clearTimeout(timer);
+        timer = setTimeout(save, 900)
+    });
+    $('save').onclick = () => {
+        if (commitVisual()) save()
+    };
+    $('createFile').onclick = createFile;
+    $('renameFile').onclick = renameFile;
+    $('deleteFile').onclick = deleteFile;
+    $('refresh').onclick = loadTree;
+    $('sidebarToggle').onclick = () => $('app').classList.toggle('sidebar-off');
+    document.querySelectorAll('.modebar button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+    let searchTimer;
+    $('search').addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(async () => {
+            const q = $('search').value.trim();
+            $('results').replaceChildren();
+            if (!q) {
+                await loadTree();
+                return
+            }
+            const d = await api('/api/search?q=' + encodeURIComponent(q));
+            d.results.forEach(x => {
+                const e = document.createElement('div');
+                e.className = 'hit';
+                e.textContent = x.path;
+                const sm = document.createElement('small');
+                sm.textContent = x.line + ': ' + x.text;
+                e.append(sm);
+                e.onclick = () => openFile(x.path);
+                $('results').append(e)
+            })
+        }, 250)
+    });
+    $('closeModal').onclick = () => $('modal').style.display = 'none';
+    init().catch(e => status('연결 실패: ' + e.message));
+
+    // 문서 글자 크기 설정
+    function setFontSize(value) {
+        document.documentElement.style.setProperty(
+            '--doc-font-size',
+            value + 'px'
+        );
+
+        document.getElementById('fontSizeValue').textContent =
+            value + 'px';
+
+        localStorage.setItem('aichat-font-size', value);
+    }
+
+    // 이전 글자 크기 불러오기
+    const savedFontSize =
+        localStorage.getItem('aichat-font-size') || '16';
+
+    const fontSlider = document.getElementById('fontSize');
+
+    fontSlider.value = savedFontSize;
+
+    setFontSize(savedFontSize);
+
+    // 실시간 글자 크기 변경
+    fontSlider.addEventListener('input', (e) => {
+        setFontSize(e.target.value); render();
+    });
+
+</script>
+</body>
+</html>

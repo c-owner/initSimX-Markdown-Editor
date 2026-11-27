@@ -1,0 +1,11 @@
+:root { --app-font: "Paperlogy 4 Regular", "Paperlogy", "Malgun Gothic", sans-serif; }
+.site-header, body > header:has(.logo) { box-sizing:border-box; display:flex; align-items:center; gap:20px; min-height:64px; height:auto; padding:14px 24px; background:#111116; border-bottom:1px solid #30303b; flex-wrap:wrap; }
+.brand, .site-header .brand { color:#c4b5fd; font-size:20px; font-weight:700; text-decoration:none; white-space:nowrap; }
+.site-nav { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.site-nav a { display:inline-block; padding:8px 12px; border-radius:7px; text-decoration:none; color:#babac9; font-size:14px; line-height:1.5; }
+.site-nav a:hover, .site-nav a[aria-current="page"] { background:#292633; color:#e3d8ff; }
+.site-header .status { flex-basis:100%; margin:0; color:#aaa8b8; font-size:13px; }
+.site-header #connect { margin-left:auto; }
+.local-note { margin-top:32px; font-size:15px; }
+.tool-nav { margin:0; border-radius:0; }
+@media(max-width:700px) { .site-header, body > header:has(.logo) { padding:12px; gap:10px; } .site-nav { gap:2px; } .site-nav a { padding:7px 8px; } .site-header #connect { margin-left:0; } }

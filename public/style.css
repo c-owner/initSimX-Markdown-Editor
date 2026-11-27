@@ -1,0 +1,139 @@
+/* ========================================
+   공통 문서 스타일
+======================================== */
+
+/* 본문 */
+.reader,
+.visual {
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+/* 제목 */
+h1 {
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+h2, h3 {
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+h4, h5, h6 {
+    font-weight: 500;
+}
+
+/* 코드블록 */
+.reader pre,
+.visual pre {
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* 표 */
+.reader th,
+.reader td,
+.visual th,
+.visual td {
+    padding: 8px 12px;
+}
+
+/* 텍스트 선택 */
+::selection {
+    background: #8b5cf655;
+}
+
+/* 스크롤바 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555560;
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+/* ========================================
+   문서 글자 크기 조절
+======================================== */
+
+:root {
+    --doc-font-size: 16px;
+}
+
+/* 읽기, 편집, 소스 */
+#reader,
+#visual,
+#text,
+#reader.vditor-reset,
+#visual .vditor-reset,
+#visual .vditor-ir,
+#visual .vditor-wysiwyg,
+#visual .vditor-sv,
+#visual .vditor-sv__marker {
+    font-size: var(--doc-font-size) !important;
+}
+
+/* 본문 */
+#reader p,
+#reader li,
+#reader blockquote,
+#reader td,
+#reader th,
+#visual .vditor-reset p,
+#visual .vditor-reset li,
+#visual .vditor-reset blockquote,
+#visual .vditor-reset td,
+#visual .vditor-reset th {
+    font-size: var(--doc-font-size) !important;
+}
+
+/* 제목 */
+#reader h1, #visual h1 {
+    font-size: calc(var(--doc-font-size) * 2) !important;
+}
+
+#reader h2, #visual h2 {
+    font-size: calc(var(--doc-font-size) * 1.6) !important;
+}
+
+#reader h3, #visual h3 {
+    font-size: calc(var(--doc-font-size) * 1.3) !important;
+}
+
+#reader h4, #visual h4 {
+    font-size: calc(var(--doc-font-size) * 1.15) !important;
+}
+
+#reader h5, #visual h5,
+#reader h6, #visual h6 {
+    font-size: var(--doc-font-size) !important;
+}
+
+/* 코드블록 */
+#reader pre,
+#reader code,
+#visual pre,
+#visual code {
+    font-size: calc(var(--doc-font-size) * 0.9) !important;
+}
+
+/* 슬라이더 */
+#fontSize {
+    width: 85px;
+    cursor: pointer;
+    accent-color: #a78bfa;
+}
+
+#fontSizeValue {
+    min-width: 35px;
+    font-size: 12px;
+    text-align: center;
+}

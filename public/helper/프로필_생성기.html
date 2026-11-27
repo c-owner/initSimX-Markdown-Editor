@@ -1,0 +1,410 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프로필 이미지 생성기</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: #18181c;
+    color: #eeeeee;
+    font-family: "Paperlogy", "Pretendard", sans-serif;
+    max-width: 760px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 26px;
+    margin-bottom: 6px;
+}
+
+.subtitle {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 24px;
+}
+
+.panel {
+    background: #242428;
+    border: 1px solid #44444d;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+    background: #1c1c20;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#frame {
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+#photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.control {
+    margin: 18px 0;
+}
+
+.control-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.value {
+    color: #e7a9cf;
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: #e7a9cf;
+}
+
+input[type="text"],
+input[type="file"],
+textarea {
+    width: 100%;
+    background: #18181c;
+    color: #eee;
+    border: 1px solid #44444d;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: inherit;
+}
+
+input[type="color"] {
+    background: transparent;
+    border: none;
+    width: 48px;
+    height: 32px;
+    cursor: pointer;
+}
+
+textarea {
+    min-height: 220px;
+    resize: vertical;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+button {
+    flex: 1;
+    background: #e7a9cf;
+    color: #242428;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.85;
+}
+
+.secondary {
+    background: #393940;
+    color: #eee;
+}
+</style>
+<link rel="stylesheet" href="/base.user.css?v=2">
+    <!-- 파비콘 -->
+
+    <!-- 모바일 홈 화면 아이콘 -->
+<link rel="stylesheet" href="/site.css"></head>
+
+<body>
+<nav class="site-header tool-nav" aria-label="주 메뉴"><a class="brand" href="/">◈ initSimX</a><div class="site-nav"><a href="/editor/">마크다운 편집기</a><a href="/helper/프로필_생성기.html">프로필 생성기</a><a href="/helper/프로필카드_생성기.html">카드 미리보기</a></div></nav>
+
+<h1>🎨 프로필 이미지 생성기</h1>
+<div class="subtitle">
+    initSimX · PROFILE IMAGE STUDIO
+</div>
+
+<div class="panel">
+    <div class="preview">
+        <div id="frame">
+            <img id="photo" alt="프로필">
+        </div>
+    </div>
+</div>
+
+<div class="panel">
+
+    <div class="control">
+        <div class="control-header">
+            이미지 불러오기
+        </div>
+        <input type="file" id="file" accept="image/*"><div class="control" hidden><label for="imageURL">이미지 링크 (이 버전에서는 로컬 사진 선택을 사용하세요)</label><input type="url" id="imageURL" placeholder="https://…/image.webp"><button type="button" id="loadImageURL">링크에서 불러오기</button><p>브라우저가 읽을 수 있는 JPG, PNG, WebP, GIF, AVIF, SVG, BMP, ICO 등을 지원합니다. GIF 등 움직이는 이미지는 내보낼 때 정지 이미지로 저장됩니다.</p></div>
+    </div>
+    
+    <div class="control">
+        <div class="control-header">
+            이미지 경로 (파일 선택 시 HTML 안에 포함)
+        </div>
+        <input type="text" id="path"
+               placeholder="G:\Pictures\profile.png">
+    </div>
+    
+    <div class="control">
+        <div class="control-header">
+            프로필 크기
+            <span class="value" id="sizeValue"></span>
+        </div>
+        <input type="range" id="size"
+               min="30" max="300" step="5" value="80">
+    </div>
+    
+    <div class="control">
+        <div class="control-header">
+            이미지 확대
+            <span class="value" id="zoomValue"></span>
+        </div>
+        <input type="range" id="zoom"
+               min="1" max="5" step="0.1" value="1.5">
+    </div>
+    
+    <div class="control">
+        <div class="control-header">
+            가로 위치
+            <span class="value" id="xValue"></span>
+        </div>
+        <input type="range" id="x"
+               min="0" max="100" value="50">
+    </div>
+    
+    <div class="control">
+        <div class="control-header">
+            세로 위치
+            <span class="value" id="yValue"></span>
+        </div>
+        <input type="range" id="y"
+               min="0" max="100" value="30">
+    </div>
+    
+    <div class="control">
+        <div class="control-header">
+            모서리 둥글기
+            <span class="value" id="radiusValue"></span>
+        </div>
+        <input type="range" id="radius"
+               min="0" max="50" value="50">
+    </div>
+    
+    <div class="control">
+        <div class="control-header">
+            테두리 두께
+            <span class="value" id="borderValue"></span>
+        </div>
+        <input type="range" id="border"
+               min="0" max="10" value="2">
+    </div>
+    
+    <div class="control">
+        <div class="control-header">
+            테두리 색상
+            <input type="color" id="color" value="#e7a9cf">
+        </div>
+    </div>
+
+</div>
+
+<div class="panel">
+
+    <div class="control-header">
+        자동 생성된 HTML 코드
+    </div>
+    
+    <p>파일 선택 후 HTML 코드 복사 시 보이는 영역만 작은 WebP 데이터로 HTML 안에 포함합니다. 같은 결과는 재사용하며 테두리는 HTML로 유지됩니다.</p>
+    <textarea id="output" readonly></textarea>
+    
+    <div class="buttons">
+        <button onclick="copyCode()">📋 HTML 코드 복사</button>
+        <button class="secondary" onclick="resetAll()">
+            초기화
+        </button>
+    </div>
+
+</div>
+
+<script src="/vendor/profile-upload.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+let previewURL = "";
+let imageTicket = 0;
+$("loadImageURL").onclick = async () => {
+ const ticket = ++imageTicket;
+ $("loadImageURL").disabled = true;
+ try {
+  const source = await ProfileUpload.fromURL($("imageURL").value.trim());
+  if (ticket !== imageTicket) return;
+  if (previewURL.startsWith('blob:')) URL.revokeObjectURL(previewURL);
+  previewURL = source; $("photo").src = source; $("path").value = $("imageURL").value.trim();
+  $("file").value = ''; update();
+ } catch(error) { ProfileDialog.alert(error.message, '이미지 링크 오류'); }
+ finally { $("loadImageURL").disabled = false; }
+};
+
+
+const controls = [
+    "size", "zoom", "x", "y",
+    "radius", "border", "color", "path"
+];
+
+$("file").addEventListener("change", event => {
+    const file = event.target.files[0];
+
+    if (!file) return;
+    imageTicket++;
+    
+    if (previewURL) URL.revokeObjectURL(previewURL);
+    
+    previewURL = URL.createObjectURL(file);
+    $("photo").src = previewURL;
+    
+    $("path").value = file.name;
+    
+    update();
+});
+
+function escapeHTML(value) {
+    return value.replace(/&/g, "&amp;")
+                .replace(/"/g, "&quot;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+}
+
+function update() {
+    const size = $("size").value;
+    const zoom = $("zoom").value;
+    const x = $("x").value;
+    const y = $("y").value;
+    const radius = $("radius").value;
+    const border = $("border").value;
+    const color = $("color").value;
+    const path = escapeHTML(
+        $("path").value || "profile.png"
+    );
+
+    $("sizeValue").textContent = size + "px";
+    $("zoomValue").textContent = Math.round(zoom * 100) + "%";
+    $("xValue").textContent = x + "%";
+    $("yValue").textContent = y + "%";
+    $("radiusValue").textContent = radius + "%";
+    $("borderValue").textContent = border + "px";
+    
+    const frameStyle = `
+        width:${size}px;
+        height:${size}px;
+        border-radius:${radius}%;
+        overflow:hidden;
+        flex-shrink:0;
+        box-sizing:border-box;
+        border:${border}px solid ${color};
+    `;
+    
+    const photoStyle = `
+        width:100% !important;
+        height:100% !important;
+        object-fit:cover;
+        object-position:${x}% ${y}%;
+        transform-origin:${x}% ${y}%;
+        transform:scale(${zoom});
+        display:block;
+        margin:0 !important;
+    `;
+    
+    $("frame").style.cssText = frameStyle;
+    $("photo").style.cssText = photoStyle;
+    
+    $("output").value =
+`<div style="${frameStyle.trim()}">
+  <img src="${path}"
+       style="${photoStyle.trim()}">
+</div>`;
+}
+
+controls.forEach(id => {
+    $(id).addEventListener("input", update);
+});
+
+async function copyCode() {
+    if (copyCode.busy) return;
+    copyCode.busy = true;
+    try {
+        if (previewURL) {
+            const saved = await ProfileUpload.save(previewURL, {
+                width: +$("size").value, height: +$("size").value,
+                border: +$("border").value, zoom: +$("zoom").value,
+                x: +$("x").value, y: +$("y").value
+            });
+            const frameStyle = $("frame").style.cssText;
+            $("output").value = `<div style="${frameStyle}"><img src="${escapeHTML(saved.url)}" style="width:100% !important;height:100% !important;display:block;margin:0 !important;"></div>`;
+        }
+    } catch (error) {
+        ProfileDialog.alert('사진을 저장하지 못했습니다. ' + error.message, '저장 오류');
+        copyCode.busy = false;
+        return;
+    }
+    copyCode.busy = false;
+    try {
+        await navigator.clipboard.writeText($("output").value);
+        ProfileDialog.alert('HTML 코드가 복사되었습니다!', '복사 완료');
+    } catch {
+        $("output").select();
+        if (document.execCommand("copy")) {
+            ProfileDialog.alert('HTML 코드가 복사되었습니다!', '복사 완료');
+        } else {
+            ProfileDialog.alert('선택된 코드를 Ctrl+C로 복사하세요.', '복사 안내');
+        }
+    }
+}
+
+function resetAll() {
+    $("size").value = 80;
+    $("zoom").value = 1.5;
+    $("x").value = 50;
+    $("y").value = 30;
+    $("radius").value = 50;
+    $("border").value = 2;
+    $("color").value = "#e7a9cf";
+
+    update();
+}
+
+update();
+</script>
+
+</body>
+</html>

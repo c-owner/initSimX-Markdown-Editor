@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>프로필카드 스튜디오</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --accent: #e7a9cf
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: #141419;
+            color: #eeeef3;
+            font: 16px/1.6 'Paperlogy', 'Malgun Gothic', sans-serif
+        }
+
+        header {
+            padding: 30px 4vw 20px;
+            border-bottom: 1px solid #34343f
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px
+        }
+
+        p {
+            margin: 7px 0;
+            color: #a7a7b8
+        }
+
+        .tag {
+            color: var(--accent);
+            letter-spacing: 3px;
+            font-size: 12px
+        }
+
+        button, select, input, textarea {
+            font: inherit
+        }
+
+        button {
+            cursor: pointer;
+            border: 1px solid #484855;
+            border-radius: 9px;
+            padding: 9px 14px;
+            color: #eee;
+            background: #30303c
+        }
+
+        button:hover {
+            background: #454554
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: #24212a;
+            border-color: var(--accent)
+        }
+
+        button[aria-pressed=true] {
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 16px
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns:380px minmax(0, 1fr);
+            gap: 24px;
+            padding: 24px 4vw
+        }
+
+        .panel {
+            background: #202027;
+            border: 1px solid #34343f;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 0 0 14px
+        }
+
+        h3 {
+            font-size: 16px;
+            margin: 22px 0 12px
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: #c5c5d1;
+            margin: 12px 0 5px
+        }
+
+        input:not([type=range]):not([type=color]), select, textarea {
+            width: 100%;
+            border: 1px solid #454552;
+            background: #15151c;
+            color: #eee;
+            border-radius: 8px;
+            padding: 9px
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--accent)
+        }
+
+        input[type=color] {
+            width: 100%;
+            height: 38px;
+            border: 0;
+            background: transparent
+        }
+
+        .pair {
+            display: grid;
+            grid-template-columns:1fr 1fr;
+            gap: 12px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .row > * {
+            min-width: 0
+        }
+
+        .row input {
+            flex: 1
+        }
+
+        .help {
+            font-size: 13px;
+            color: #a7a7b8
+        }
+
+        .stage {
+            overflow: auto;
+            min-height: 320px;
+            background: #18181e;
+            border-radius: 12px;
+            padding: 28px
+        }
+
+        .preview-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px
+        }
+
+        .preview-head h2 {
+            margin: 0
+        }
+
+        #code {
+            height: 220px;
+            font: 12px/1.6 Consolas, monospace
+        }
+
+        .sticky {
+            position: sticky;
+            top: 20px
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #efe4ee;
+            color: #28202b;
+            padding: 10px 22px;
+            border-radius: 12px;
+            z-index: 5;
+            display: none
+        }
+
+        summary {
+            cursor: pointer
+        }
+
+        output {
+            float: right;
+            color: var(--accent)
+        }
+
+        a {
+            color: #e7a9cf
+        }
+
+        @media (max-width: 950px) {
+            .layout {
+                grid-template-columns:1fr
+            }
+
+            .sticky {
+                position: static
+            }
+
+            .stage {
+                padding: 14px
+            }
+        }
+
+        @media (max-width: 450px) {
+            .pair {
+                grid-template-columns:1fr
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/base.user.css?v=2">
+    <!-- 파비콘 -->
+
+    <!-- 모바일 홈 화면 아이콘 -->
+<link rel="stylesheet" href="/site.css"></head>
+<body>
+<nav class="site-header tool-nav" aria-label="주 메뉴"><a class="brand" href="/">◈ initSimX</a><div class="site-nav"><a href="/editor/">마크다운 편집기</a><a href="/helper/프로필_생성기.html">프로필 생성기</a><a href="/helper/프로필카드_생성기.html">카드 미리보기</a></div></nav>
+<header>
+    <div class="tag">OFFLINE · PROFILE CARD STUDIO</div>
+    <h1>나만의 인물 카드</h1>
+    <p>사진과 이야기를 담고, Typora에 그대로 붙여 넣으세요.</p>
+    <div class="bar">
+        <button id="compactMode">인물 도감</button>
+        <button id="detailMode">상세 프로필</button>
+        <span style="flex:1"></span>
+        <button id="save">작업 저장</button>
+        <button id="load">작업 불러오기</button>
+        <input accept="application/json,.json" hidden id="projectFile" type="file">
+        <button id="reset">예시로 초기화</button>
+    </div>
+</header>
+<main class="layout">
+    <aside>
+        <section class="panel"><h2>카드 구성</h2>
+            <div id="collectionOptions"><label for="heading">도감 제목</label><input id="heading"><label for="columns">열 수</label><select id="columns">
+                <option value="1">1열</option>
+                <option value="2">2열</option>
+                <option value="3">3열</option>
+                <option value="4">4열</option>
+            </select></div>
+            <label for="person">편집할 인물</label><select id="person"></select>
+            <div class="bar">
+                <button id="add">인물 추가</button>
+                <button id="remove">선택 인물 삭제</button>
+            </div>
+            <p class="help">두 모드는 인물 정보를 공유합니다. 상세 모드에는 선택한 인물만 표시됩니다.</p></section>
+        <section class="panel"><h2>인물 정보</h2><label for="name">이름</label><input id="name"><label for="title">영문 타이틀</label><input id="title">
+            <div class="pair">
+                <div><label for="anchor">앵커 ID</label><input id="anchor" placeholder="bulma"></div>
+                <div><label for="color">포인트색</label><input id="color" type="color"></div>
+            </div>
+            <p class="help" id="anchorHint">도감 링크와 상세 카드의 ID로 사용됩니다.</p>
+            <div id="details"><label for="english">영문명</label><input id="english">
+                <div class="pair">
+                    <div><label for="age">나이</label><input id="age" placeholder="25세"></div>
+                    <div><label for="gender">성별</label><input id="gender"></div>
+                </div>
+                <h3>프로필 필드</h3>
+                <div id="fields"></div>
+                <button id="addField" style="margin-top:12px">필드 추가</button>
+                <h3>상태 배지</h3>
+                <div id="badges"></div>
+                <button id="addBadge" style="margin-top:12px">배지 추가</button>
+            </div>
+        </section>
+        <section class="panel"><h2>사진 · 이모지</h2><label for="media">표시 방식</label><select id="media">
+            <option value="emoji">이모지</option>
+            <option value="photo">로컬 사진</option>
+        </select><label for="emoji">이모지 / 짧은 문자</label><input id="emoji"><div class="control" hidden><label for="imageURL">이미지 링크 (이 버전에서는 로컬 사진 선택을 사용하세요)</label><input type="url" id="imageURL" placeholder="https://…/image.webp"><button type="button" id="loadImageURL">링크에서 불러오기</button><p>브라우저가 읽을 수 있는 JPG, PNG, WebP, GIF, AVIF, SVG, BMP, ICO 등을 지원합니다. GIF 등 움직이는 이미지는 내보낼 때 정지 이미지로 저장됩니다.</p></div><label for="photo">사진 선택</label><input accept="image/*" id="photo" type="file">
+            <p class="help">선택한 사진은 복사·HTML 다운로드 시 보이는 영역만 작은 WebP 데이터로 HTML 안에 포함합니다. 같은 결과는 재사용합니다.</p><label for="path">이미지 경로 (선택한 사진은 HTML에 포함)</label><input id="path" placeholder="G:\Pictures\부르마.png"><label class="row"><input id="embed"
+                                                                                                                                                                                                 style="width:auto"
+                                                                                                                                                                                                 type="checkbox">사진을 HTML에
+                포함</label>
+            <p class="help">포함을 끄면 입력한 경로를 사용합니다. 브라우저는 전체 경로를 자동으로 읽을 수 없습니다. 경로 사진이 보이지 않으면 같은 파일을 위에서 선택하세요. 상대 경로는 Typora 문서 위치를 기준으로 합니다.</p>
+            <p class="help" id="photoStatus"></p>
+            <button id="clearPhoto">선택 사진 지우기</button>
+            <div id="sliders"></div>
+            <label for="borderColor">사진 테두리색</label><input id="borderColor" type="color">
+            <button id="resetImage" style="margin-top:12px">이미지 조절 초기화</button>
+        </section>
+    </aside>
+    <div>
+        <div class="sticky">
+            <section class="panel">
+                <div class="preview-head"><h2>실시간 미리보기</h2><span class="help" id="modeLabel"></span></div>
+                <div class="stage" id="preview"></div>
+                <p class="help">도감의 ‘프로필 보기’는 같은 문서에 붙여 넣은 상세 카드로 이동합니다. 도감과 상세 카드의 앵커 ID를 같게 맞추세요.</p></section>
+            <section class="panel">
+                <div class="preview-head"><h2>Typora용 인라인 HTML</h2>
+                    <button class="primary" id="copy">HTML 복사</button>
+                </div>
+                <textarea aria-label="생성된 HTML" id="code" readonly></textarea>
+                <div class="bar">
+                    <button id="download">카드 HTML 다운로드</button>
+                </div>
+                <p class="help">Typora에 코드 블록 없이 HTML 자체를 붙여 넣으세요. 테마에 따라 간격이나 글꼴이 달라질 수 있습니다. 작업 저장은 사진까지 포함한 편집용 JSON 파일입니다.</p></section>
+        </div>
+    </div>
+</main>
+<div aria-live="polite" class="toast" id="toast" role="status"></div>
+<script src="/vendor/profile-upload.js"></script>
+<script>
+    'use strict';
+    const $ = id => document.getElementById(id), esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+    const specs = [['width', '사진 가로 크기', 40, 300, 1, 'px'], ['height', '사진 세로 크기', 40, 350, 1, 'px'], ['zoom', '이미지 확대', 1, 5, .05, '배'], ['x', '가로 위치', 0, 100, 1, '%'], ['y', '세로 위치', 0, 100, 1, '%'], ['radius', '모서리 둥글기', 0, 50, 1, '%'], ['border', '테두리 두께', 0, 12, 1, 'px']];
+    const imageDefaults = () => ({width: 88, height: 88, zoom: 1, x: 50, y: 50, radius: 50, border: 2, borderColor: '#e7a9cf'});
+
+    function make(name, title, english, emoji, anchor, color, fields) {
+        return {name, title, english, emoji, anchor, color, age: '', gender: '', media: 'emoji', path: '', data: '', embed: false, image: imageDefaults(), fields, badges: ['모험 중']}
+    }
+
+    function initial() {
+        let people = [make('무천도사', 'TURTLE HERMIT', 'Master Roshi', '👴', 'roshi', '#d9b78a', [['직업', '무술 스승'], ['성격', '유쾌하고 노련함'], ['거주', '거북 하우스']]), make('손고쿠', 'SAIYAN WARRIOR', 'Son Goku', '🥋', 'goku', '#f1a46e', [['직업', '무도가'], ['성격', '순수하고 도전적'], ['거주', '파오즈산']]), make('런치', 'DUAL PERSONALITY', 'Launch', '🌻', 'launch', '#e4c66a', [['직업', '자유인'], ['성격', '상반된 두 성격'], ['거주', '거북 하우스']]), make('라줄리 18호', 'ANDROID NO.18', 'Android 18', '💎', 'android18', '#99bde4', [['직업', '무도가'], ['성격', '냉정하고 현실적'], ['거주', '거북 하우스']]), make('부르마 브리프', 'CAPSULE CORPORATION', 'Bulma Brief', '🔬', 'bulma', '#e7a9cf', [['직업', '캡슐 코오퍼레이션 대표'], ['성격', '지적이고 당당함'], ['거주', '모험 중']])];
+        people[4].age = '25세';
+        people[4].gender = '여성';
+        return {version: 1, mode: 'compact', heading: 'CHARACTER DATABASE', columns: 2, selected: 4, people}
+    }
+
+    let state = initial(), uploadTicket = 0;
+    const person = () => state.people[state.selected];
+
+    function toast(t) {
+        $('toast').textContent = t;
+        $('toast').style.display = 'block';
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(() => $('toast').style.display = 'none', 2800)
+    }
+
+    function safeSource(path) {
+        let p = String(path).trim();
+        if (/^[a-z]:[\\/]/i.test(p)) return 'file:///' + p.replaceAll('\\', '/').split('/').map((s, i) => i === 0 ? s : encodeURIComponent(s)).join('/');
+        if (/^\\\\/.test(p)) return 'file://' + p.slice(2).replaceAll('\\', '/').split('/').map(encodeURIComponent).join('/');
+        if (/^data:image\/(png|jpeg|webp|gif|avif|bmp|svg\+xml|x-icon|vnd.microsoft.icon);base64,[a-z0-9+/=\s]+$/i.test(p)) return p;
+        if (/^https?:\/\//i.test(p)) return p;
+        if (/^[a-z][a-z0-9+.-]*:/i.test(p)) return /^file:/i.test(p) ? p : '';
+        return p.replaceAll('\\', '/');
+    }
+
+    function avatar(p, preview) {
+        const im = p.image;
+        const cropped = !preview && p.exported;
+        let source = cropped || (preview ? (p.data || safeSource(p.path)) : (p.embed ? p.data : safeSource(p.path)));
+        const frame = `width:${im.width}px;height:${im.height}px;max-width:100%;border-radius:${im.radius}%;border:${im.border}px solid ${im.borderColor};overflow:hidden;flex-shrink:0;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#30303a;`;
+        return `<div style="${frame}">${p.media === 'photo' && source ? `<img alt="${esc(p.name)}" src="${esc(source)}" style="width:100% !important;height:100% !important;max-width:none !important;object-fit:cover;object-position:${im.x}% ${im.y}%;transform-origin:${im.x}% ${im.y}%;transform:scale(${cropped ? 1 : im.zoom});display:block;margin:0 !important;">` : `<span style="font-size:${Math.min(im.width, im.height) * .47}px;line-height:1;">${esc(p.emoji || '👤')}</span>`}</div>`
+    }
+
+    const base = 'font-family:Paperlogy,\'Malgun Gothic\',sans-serif;color:#eeeeee;line-height:1.6;box-sizing:border-box;';
+
+    function cardHTML(preview = false) {
+        if (state.mode === 'compact') {
+            return `<div style="${base}max-width:900px;"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><strong style="font-size:15px;letter-spacing:2px;">${esc(state.heading)}</strong><span style="font-size:12px;color:#aaa;">${state.people.length} CHARACTERS</span></div><div style="display:grid;grid-template-columns:repeat(${state.columns},minmax(0,1fr));gap:12px;">${state.people.map(p => `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;min-width:0;padding:16px;background:#242428;border:1px solid #44444d;border-radius:14px;">${avatar(p, preview)}<div style="min-width:0;flex:1 1 110px;overflow-wrap:anywhere;"><div style="font-size:10px;letter-spacing:1.5px;color:${p.color};">${esc(p.title)}</div><div style="font-size:18px;font-weight:700;margin:4px 0;">${esc(p.name)}</div><a href="#${esc(p.anchor)}" style="font-size:12px;color:#b9b9c5;text-decoration:none;">프로필 보기</a></div></div>`).join('')}</div></div>`
+        }
+        const p = person();
+        return `<div id="${esc(p.anchor)}" style="${base}display:flex;align-items:center;flex-wrap:wrap;gap:20px;max-width:560px;padding:22px;background:#242428;border:1px solid #44444d;border-radius:16px;">${avatar(p, preview)}<div style="flex:1 1 180px;min-width:0;overflow-wrap:anywhere;"><div style="font-size:11px;letter-spacing:2px;color:${p.color};">${esc(p.title)}</div><div style="font-size:25px;font-weight:700;margin:4px 0;">${esc(p.name)}</div><div style="font-size:12px;color:#aaa;">${[p.english, p.age, p.gender].filter(Boolean).map(esc).join(' · ')}</div><div style="border-top:1px solid #44444d;margin:12px 0;"></div>${p.fields.map(([k, v]) => `<div style="font-size:13px;display:flex;gap:12px;margin:5px 0;"><span style="color:#aaa;flex:0 0 48px;overflow-wrap:anywhere;">${esc(k)}</span><span style="white-space:pre-wrap;">${esc(v)}</span></div>`).join('')}<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;">${p.badges.filter(Boolean).map(b => `<span style="font-size:11px;color:${p.color};border:1px solid ${p.color};border-radius:6px;padding:2px 9px;">${esc(b)}</span>`).join('')}</div></div></div>`
+    }
+
+    function update() {
+        const p = person();
+        $('preview').innerHTML = cardHTML(true);
+        $('code').value = cardHTML();
+        $('modeLabel').textContent = state.mode === 'compact' ? `${state.people.length}명 · ${state.columns}열` : '선택한 인물 1명';
+        $('compactMode').setAttribute('aria-pressed', state.mode === 'compact');
+        $('detailMode').setAttribute('aria-pressed', state.mode === 'detail');
+        $('details').hidden = state.mode !== 'detail';
+        $('collectionOptions').hidden = state.mode !== 'compact';
+        const ids = state.people.map(p => p.anchor);
+        $('anchorHint').textContent = !p.anchor ? '앵커 ID를 입력하세요.' : ids.filter(x => x === p.anchor).length > 1 ? '같은 앵커 ID가 있습니다. 인물별로 다르게 입력하세요.' : '도감 링크와 상세 카드의 ID로 사용됩니다.';
+        $('photoStatus').textContent = p.media !== 'photo' ? '' : p.embed && !p.data ? '사진 포함을 사용하려면 파일을 선택하세요.' : !p.embed && !p.path ? '내보낼 사진 경로를 입력하거나 사진 포함을 켜세요.' : '사진 경로 또는 포함 설정이 적용됩니다.';
+        document.querySelectorAll('#preview img').forEach(img => img.onerror = () => {
+            img.alt = '사진을 선택해 미리보세요';
+        });
+    }
+
+    function optionNames() {
+        [...$('person').options].forEach((o, i) => o.textContent = state.people[i].name || '이름 없는 인물')
+    }
+
+    function renderRows() {
+        const p = person();
+        $('fields').replaceChildren();
+        p.fields.forEach((f, i) => {
+            const row = document.createElement('div');
+            row.className = 'row';
+            row.style.marginBottom = '8px';
+            ['항목', '내용'].forEach((label, j) => {
+                const input = document.createElement('input');
+                input.value = f[j];
+                input.setAttribute('aria-label', label + ' ' + (i + 1));
+                input.addEventListener('input', () => {
+                    f[j] = input.value;
+                    update()
+                });
+                row.append(input)
+            });
+            const b = document.createElement('button');
+            b.textContent = '삭제';
+            b.setAttribute('aria-label', `필드 ${i + 1} 삭제`);
+            b.onclick = () => {
+                p.fields.splice(i, 1);
+                renderRows();
+                update()
+            };
+            row.append(b);
+            $('fields').append(row)
+        });
+        $('badges').replaceChildren();
+        p.badges.forEach((v, i) => {
+            const row = document.createElement('div');
+            row.className = 'row';
+            row.style.marginBottom = '8px';
+            const input = document.createElement('input');
+            input.value = v;
+            input.setAttribute('aria-label', `상태 배지 ${i + 1}`);
+            input.oninput = () => {
+                p.badges[i] = input.value;
+                update()
+            };
+            const b = document.createElement('button');
+            b.textContent = '삭제';
+            b.setAttribute('aria-label', `배지 ${i + 1} 삭제`);
+            b.onclick = () => {
+                p.badges.splice(i, 1);
+                renderRows();
+                update()
+            };
+            row.append(input, b);
+            $('badges').append(row)
+        })
+    }
+
+    const props = ['name', 'title', 'anchor', 'color', 'english', 'age', 'gender', 'media', 'emoji', 'path'];
+
+    function render() {
+        uploadTicket++;
+        const p = person();
+        $('person').replaceChildren(...state.people.map((p, i) => new Option(p.name || '이름 없는 인물', i)));
+        $('person').value = state.selected;
+        $('heading').value = state.heading;
+        $('columns').value = state.columns;
+        props.forEach(k => $(k).value = p[k]);
+        $('embed').checked = p.embed;
+        $('borderColor').value = p.image.borderColor;
+        $('photo').value = '';
+        specs.forEach(([k, , , , , unit]) => {
+            $(k).value = p.image[k];
+            $(k + 'Value').value = p.image[k] + unit
+        });
+        renderRows();
+        update()
+    }
+
+    specs.forEach(([k, label, min, max, step, unit]) => {
+        const l = document.createElement('label');
+        l.htmlFor = k;
+        l.textContent = label;
+        const out = document.createElement('output');
+        out.id = k + 'Value';
+        l.append(out);
+        const input = document.createElement('input');
+        Object.assign(input, {id: k, type: 'range', min, max, step});
+        input.oninput = () => {
+            person().image[k] = Number(input.value);
+            out.value = input.value + unit;
+            update()
+        };
+        $('sliders').append(l, input)
+    });
+    props.forEach(k => $(k).addEventListener('input', () => {
+        person()[k] = $(k).value;
+        if (k === 'anchor') {
+            person()[k] = person()[k].trim().replace(/[^\p{L}\p{N}_-]/gu, '');
+        }
+        optionNames();
+        update()
+    }));
+    $('borderColor').oninput = () => {
+        person().image.borderColor = $('borderColor').value;
+        update()
+    };
+    $('embed').onchange = () => {
+        person().embed = $('embed').checked;
+        update()
+    };
+    $('heading').oninput = () => {
+        state.heading = $('heading').value;
+        update()
+    };
+    $('columns').onchange = () => {
+        state.columns = Number($('columns').value);
+        update()
+    };
+    $('person').onchange = () => {
+        state.selected = Number($('person').value);
+        render()
+    };
+    ['compact', 'detail'].forEach(mode => $(mode + 'Mode').onclick = () => {
+        state.mode = mode;
+        render()
+    });
+    $('add').onclick = () => {
+        let n = 1;
+        while (state.people.some(p => p.anchor === 'character-' + n)) n++;
+        state.people.push(make('새 인물', 'CHARACTER', 'New Character', '👤', 'character-' + n, '#e7a9cf', [['직업', ''], ['성격', ''], ['거주', '']]));
+        state.selected = state.people.length - 1;
+        render()
+    };
+    $('remove').onclick = async () => {
+        if (state.people.length === 1) return toast('인물은 최소 한 명이 필요합니다.');
+        if (!await ProfileDialog.confirm(person().name + ' 인물을 삭제할까요?', '인물 삭제', true)) return;
+        state.people.splice(state.selected, 1);
+        state.selected = Math.min(state.selected, state.people.length - 1);
+        render()
+    };
+    $('addField').onclick = () => {
+        person().fields.push(['새 항목', '']);
+        renderRows();
+        update()
+    };
+    $('addBadge').onclick = () => {
+        person().badges.push('새 상태');
+        renderRows();
+        update()
+    };
+    $('resetImage').onclick = () => {
+        person().image = imageDefaults();
+        render()
+    };
+    $('clearPhoto').onclick = () => {
+        person().data = '';
+        person().path = '';
+        person().media = 'emoji';
+        render()
+    };
+    $('loadImageURL').onclick = async () => {
+        const p = person(), ticket = ++uploadTicket;
+        const url = $('imageURL').value.trim();
+        $('loadImageURL').disabled = true;
+        try {
+            const data = await ProfileUpload.fromURL(url);
+            if (ticket !== uploadTicket) return;
+            p.data = data; p.media = 'photo'; p.path = url;
+            render(); toast('링크의 사진을 불러왔습니다.');
+        } catch (error) { toast(error.message); }
+        finally { $('loadImageURL').disabled = false; }
+    };
+    $('photo').onchange = async () => {
+        const file = $('photo').files[0];
+        if (!file) return;
+        const p = person(), ticket = ++uploadTicket;
+        if (!file.type.startsWith('image/')) return toast('이미지 파일을 선택하세요.');
+        if (file.size > 20 * 1024 * 1024) return toast('20MB 이하 사진을 선택하세요.');
+        try {
+            const data = await new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(r.result);
+                r.onerror = reject;
+                r.readAsDataURL(file)
+            });
+            if (ticket !== uploadTicket) return;
+            p.data = data;
+            p.media = 'photo';
+            if (!p.path) p.path = file.name;
+            render();
+            toast('사진을 불러왔습니다. HTML 복사 시 크롭하여 저장합니다.')
+        } catch {
+            toast('사진을 읽지 못했습니다.')
+        }
+    };
+
+    function download(text, name, type) {
+        const url = URL.createObjectURL(new Blob([text], {type}));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 30000)
+    }
+
+    $('save').onclick = () => download(JSON.stringify(state, null, 2), '프로필카드_작업.json', 'application/json');
+    $('download').onclick = async () => { try { const html = await prepareExport(); download('<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>인물 카드</title><body style="background:#18181e;padding:24px;">' + html + '</body></html>', '프로필카드.html', 'text/html'); } catch (error) { toast('사진 저장 실패: ' + error.message); } };
+    async function prepareExport() {
+        const snapshot = JSON.stringify(state);
+        const people = state.mode === 'compact' ? state.people : [person()];
+        const results = [];
+        for (const p of people) {
+            if (p.media === 'photo' && p.data) {
+                const saved = await ProfileUpload.save(p.data, p.image);
+                results.push([p, saved.url]);
+            }
+        }
+        if (snapshot !== JSON.stringify(state)) throw Error('편집 내용이 바뀌었습니다. 다시 복사하세요.');
+        try {
+            results.forEach(([p, url]) => p.exported = url);
+            return cardHTML();
+        } finally { results.forEach(([p]) => delete p.exported); }
+    }
+    $('copy').onclick = async () => {
+        if ($('copy').disabled) return;
+        $('copy').disabled = true;
+        try { $('code').value = await prepareExport(); }
+        catch (error) { toast('사진 저장 실패: ' + error.message); return; }
+        finally { $('copy').disabled = false; }
+        try {
+            await navigator.clipboard.writeText($('code').value);
+            toast('HTML을 복사했습니다.')
+        } catch {
+            $('code').focus();
+            $('code').select();
+            toast(document.execCommand('copy') ? 'HTML을 복사했습니다.' : '선택된 코드를 Ctrl+C로 복사하세요.')
+        }
+    };
+
+    function validate(raw) {
+        if (!raw || raw.version !== 1 || !Array.isArray(raw.people) || raw.people.length < 1 || raw.people.length > 200) throw Error();
+        const clean = initial();
+        clean.mode = raw.mode === 'detail' ? 'detail' : 'compact';
+        clean.heading = String(raw.heading ?? 'CHARACTER DATABASE');
+        clean.columns = Math.max(1, Math.min(4, Math.round(Number(raw.columns) || 2)));
+        clean.people = raw.people.map(v => {
+            if (!v || typeof v !== 'object') throw Error();
+            const p = make('', '', '', '👤', '', '#e7a9cf', []);
+            for (const k of props) p[k] = String(v[k] ?? p[k]);
+            p.anchor = p.anchor.replace(/[^\p{L}\p{N}_-]/gu, '');
+            p.color = /^#[\da-f]{6}$/i.test(p.color) ? p.color : '#e7a9cf';
+            p.media = v.media === 'photo' ? 'photo' : 'emoji';
+            p.path = safeSource(v.path || '');
+            p.data = /^data:image\/(png|jpeg|webp|gif|avif|bmp|svg\+xml|x-icon|vnd.microsoft.icon);base64,[a-z0-9+/=\s]+$/i.test(v.data || '') ? v.data : '';
+            p.embed = !!v.embed;
+            p.fields = Array.isArray(v.fields) ? v.fields.slice(0, 100).filter(Array.isArray).map(f => [String(f[0] ?? ''), String(f[1] ?? '')]) : [];
+            p.badges = Array.isArray(v.badges) ? v.badges.slice(0, 100).map(String) : [];
+            specs.forEach(([k, , min, max]) => {
+                const n = Number(v.image?.[k]);
+                p.image[k] = Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : p.image[k]
+            });
+            p.image.borderColor = /^#[\da-f]{6}$/i.test(v.image?.borderColor) ? v.image.borderColor : '#e7a9cf';
+            return p
+        });
+        clean.selected = Math.max(0, Math.min(clean.people.length - 1, Math.floor(Number(raw.selected) || 0)));
+        return clean
+    }
+
+    $('load').onclick = () => $('projectFile').click();
+    $('projectFile').onchange = async () => {
+        const f = $('projectFile').files[0];
+        if (!f) return;
+        try {
+            if (f.size > 100 * 1024 * 1024) throw Error();
+            const next = validate(JSON.parse(await f.text()));
+            if (!await ProfileDialog.confirm('현재 작업을 불러온 작업으로 바꿀까요?', '작업 불러오기', true)) return;
+            state = next;
+            render();
+            toast('작업을 불러왔습니다.')
+        } catch {
+            toast('유효한 프로필카드 작업 JSON 파일이 아닙니다.')
+        } finally {
+            $('projectFile').value = ''
+        }
+    };
+    $('reset').onclick = async () => {
+        if (await ProfileDialog.confirm('편집 내용을 드래곤볼 예시로 초기화할까요?', '초기화 확인', true)) {
+            state = initial();
+            render()
+        }
+    };
+    render();
+</script>
+</body>
+</html>
