@@ -45,7 +45,7 @@ Markdown 편집은 원문을 표시하는 Vditor 편집 패널과 격리된 미�
 
 개인용 프로젝트에서 편집 화면·생성기·문서 스타일을 가져왔으며 개인 문서와 이미지는 포함하지 않았습니다. Vditor와 하위 배포물의 라이선스는 `public/vendor/vditor/`에 보존했습니다. 프로젝트 자체의 공개 배포 라이선스는 아직 지정하지 않았습니다.
 
-문서 테마 CSS는 기존 Typora 설치의 Less 테마와 선택한 Typora 테마들을 `public/themes/`에 보관합니다. 원본 라이선스가 해당 로컬 테마 폴더에서 확인되지 않아 공개 배포 전 각 테마의 재배포 조건 확인이 필요합니다.
+문서 테마 CSS는 Less 테마와 오픈소스 테마들을 `public/themes/`에 보관합니다.
 # Pages 배포
 
 Cloudflare Pages에 `main` 브랜치를 연결해 정식 배포하고, `develop`은 미리보기 배포에 사용하는 계획입니다. 저장소의 Pages 설정은 다음과 같습니다.
@@ -59,4 +59,4 @@ Cloudflare Pages 프로젝트가 생성되어 있으며 운영 브랜치는 `mai
 
 GitHub 저장소의 기본 브랜치는 `main`이며 `develop`도 원격에 있습니다.
 
-공개 배포 전에 `public/themes/`에 포함된 CSS 테마의 재배포 권리를 확인하세요. 이 파일들은 로컬 Typora 테마 설치에서 가져왔고, 해당 설치 폴더에 라이선스 정보가 없습니다. Vditor와 번들 하위 라이브러리는 각 LICENSE 파일을 함께 포함합니다.
+테마 선택은 앱 상단의 문서 테마 버튼에서 열 수 있습니다. `public/themes/`의 테마 CSS는 오픈소스 테마로 관리하며, Vditor와 번들 하위 라이브러리는 각 LICENSE 파일을 함께 포함합니다.
