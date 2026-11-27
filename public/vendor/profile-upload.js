@@ -70,13 +70,13 @@ window.ProfileUpload = {
   return blob;
  },
  async save(source, im) {
-  let blob;
-  try { blob = await this.crop(source, im); }
-  catch (error) {
-   if (/^https:\/\//i.test(source)) return {url: source, embedded: false};
-   throw error;
-  }
+  const blob = await this.crop(source, im);
   const url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
-  return {url};
+  return {url, blob};
+ },
+ download(blob, filename='profile.webp') {
+  const url=URL.createObjectURL(blob), link=document.createElement('a');
+  link.href=url; link.download=filename; link.style.display='none'; document.body.append(link); link.click(); link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
  }
 };

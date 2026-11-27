@@ -8,7 +8,7 @@ export const initial = () => ({
     change: '최근 두 사람 사이에 있었던 변화를 적어보세요.',
     memory: '함께 겪은 사건이나 기억에 남는 순간을 적어보세요.',
     unfinished: '앞으로 이어질 이야기를 적어보세요.',
-    people: [{name: '하늘', role: '먼저 손을 내미는 사람', feeling: '오랜 시간을 함께 보내며 서로를 잘 이해한다.', photo: '', position: 50}, {name: '도윤', role: '묵묵히 곁을 지키는 사람', feeling: '필요할 때 편하게 의지할 수 있는 사람이다.', photo: '', position: 50}]
+    people: [{name: '하늘', role: '먼저 손을 내미는 사람', feeling: '오랜 시간을 함께 보내며 서로를 잘 이해한다.', photo: '', position: 50, x: 50, zoom: 1}, {name: '도윤', role: '묵묵히 곁을 지키는 사람', feeling: '필요할 때 편하게 의지할 수 있는 사람이다.', photo: '', position: 50, x: 50, zoom: 1}]
 });
 export const escapeHTML = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const palettes = {
@@ -31,7 +31,7 @@ export function validate(raw) {
         if (!person || ['name', 'role', 'feeling', 'photo'].some(k => typeof person[k] !== 'string')) throw Error('인물 정보를 확인하세요.');
         if (person.name.length > 80 || person.role.length > 120 || person.feeling.length > 2000) throw Error('인물 정보가 너무 깁니다.');
         if (person.photo && (!/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(person.photo) || person.photo.length > 4 * 1024 * 1024)) throw Error('지원하지 않는 사진 형식입니다.');
-        return {name: person.name, role: person.role, feeling: person.feeling, photo: person.photo, position: Math.max(0, Math.min(100, Number(person.position) || 0))};
+        return {name: person.name, role: person.role, feeling: person.feeling, photo: person.photo, position: Math.max(0, Math.min(100, Number(person.position) || 0)), x: Math.max(0, Math.min(100, Number(person.x) || 0)), zoom: Math.max(1, Math.min(5, Number(person.zoom) || 1))};
     });
     return next;
 }
@@ -40,7 +40,7 @@ export function cardHTML(state) {
     const [bg, fg, muted, accent, line] = palettes[state.theme] || palettes.general;
     const e = escapeHTML, text = v => e(v).replace(/\n/g, '<br>');
     const name = p => '@' + p.name.replace(/^@+/, '');
-    const portrait = p => `<div style="width:96px;height:112px;margin:0 auto 14px;border-radius:48px 48px 12px 12px;overflow:hidden;background:${line};display:flex;align-items:center;justify-content:center;color:${accent};font-size:32px;">${p.photo ? `<img src="${e(p.photo)}" alt="${e(name(p))}" style="display:block;width:100%;height:100%;object-fit:cover;object-position:50% ${p.position}%;">` : e(p.name.replace(/^@+/, '').slice(0, 1) || '◇')}</div>`;
+    const portrait = p => `<div style="width:96px;height:112px;margin:0 auto 14px;border-radius:48px 48px 12px 12px;overflow:hidden;background:${line};display:flex;align-items:center;justify-content:center;color:${accent};font-size:32px;">${p.photo ? `<img src="${e(p.exported || p.photo)}" alt="${e(name(p))}" style="display:block;width:100%;height:100%;object-fit:cover;object-position:${p.exported ? '50% 50%' : `${p.x??50}% ${p.position}%`};transform-origin:${p.x??50}% ${p.position}%;transform:scale(${p.exported ? 1 : p.zoom??1});">` : e(p.name.replace(/^@+/, '').slice(0, 1) || '◇')}</div>`;
     const motif = state.theme === 'love' ? '♥' : state.theme === 'revenge' ? '⚡' : state.theme === 'family' ? '❋' : '↔';
     const connector = state.theme === 'general' ? `<div style="height:1px;flex:1;background:${accent};"></div><span style="color:${accent};font-size:15px;padding:0 8px;">↔</span><div style="height:1px;flex:1;background:${accent};"></div>` : `<div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,${accent});"></div><span style="display:inline-grid;place-items:center;width:36px;height:36px;border:1px solid ${accent};border-radius:${state.theme === 'love' ? '50%' : state.theme === 'family' ? '12px' : '4px'};color:${accent};font-size:18px;transform:${state.theme === 'revenge' ? 'rotate(45deg)' : ''};">${motif}</span><div style="height:1px;flex:1;background:linear-gradient(90deg,${accent},transparent);"></div>`;
     const person = p => `<td style="width:46%;padding:20px 8px;text-align:center;vertical-align:top;">${portrait(p)}<div style="font-size:19px;font-weight:700;color:${fg};">${e(name(p))}</div><div style="font-size:12px;color:${muted};margin-top:6px;">${text(p.role)}</div></td>`;

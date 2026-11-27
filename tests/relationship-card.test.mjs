@@ -8,7 +8,7 @@ test('all relationship themes change the exported visual palette',()=>{
  state.theme='night';assert.equal(validate(state).theme,'general');
 });
 test('relationship project round-trip preserves both perspectives and rejects unsafe photos',()=>{
- const state=initial();state.people[0].position=83;
+ const state=initial();state.people[0].position=83;state.people[0].x=27;state.people[0].zoom=2.4;
  assert.deepEqual(validate(JSON.parse(JSON.stringify(state))),state);
  state.people[0].photo='javascript:alert(1)';
  assert.throws(()=>validate(state),/사진/);

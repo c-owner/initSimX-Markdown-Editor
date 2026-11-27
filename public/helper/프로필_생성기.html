@@ -390,6 +390,7 @@ async function copyCode() {
                 border: +$("border").value, zoom: +$("zoom").value,
                 x: +$("x").value, y: +$("y").value
             });
+            ProfileUpload.download(saved.blob, '프로필.webp');
             const frameStyle = $("frame").style.cssText;
             $("output").value = `<div style="${frameStyle}"><img src="${escapeHTML(saved.url)}" style="width:100% !important;height:100% !important;display:block;margin:0 !important;"></div>`;
         }

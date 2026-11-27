@@ -584,7 +584,7 @@
             if (ticket !== uploadTicket) return;
             p.data = data; p.media = 'photo'; p.path = url;
             $('photo').value = '';
-            render(); toast('링크의 사진을 불러왔습니다.');
+            render(); toast('사진을 불러왔습니다. HTML 복사 시 크롭하여 저장합니다.');
         } catch (error) { toast(error.message); }
         finally { $('loadImageURL').disabled = false; }
     };
@@ -631,6 +631,7 @@
         for (const p of people) {
             if (p.media === 'photo' && p.data) {
                 const saved = await ProfileUpload.save(p.data, p.image);
+                ProfileUpload.download(saved.blob, `${(p.name || '인물').replace(/[\\/:*?"<>|]/g, '_')}_프로필.webp`);
                 results.push([p, saved.url]);
             }
         }
