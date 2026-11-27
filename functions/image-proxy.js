@@ -15,10 +15,7 @@ export async function onRequest(context) {
   }
 
   if (
-    imageUrl.protocol !== 'http:' ||
-    imageUrl.hostname !== ALLOWED_HOST ||
-    imageUrl.port !== ALLOWED_PORT ||
-    !imageUrl.pathname.startsWith('/Images/') ||
+    !((imageUrl.protocol === 'http:' && imageUrl.hostname === ALLOWED_HOST && imageUrl.port === ALLOWED_PORT && imageUrl.pathname.startsWith('/Images/')) || (imageUrl.protocol === 'https:' && imageUrl.hostname === 'static.wikia.nocookie.net' && !imageUrl.port && imageUrl.pathname.startsWith('/sims/'))) ||
     imageUrl.username ||
     imageUrl.password
   ) {

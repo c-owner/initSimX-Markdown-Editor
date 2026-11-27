@@ -634,7 +634,7 @@
         </div>
         <button class="file-create" id="demo">예시 문서로 둘러보기</button>
         <button class="file-create" id="createFile">＋ 새 Markdown 파일</button>
-        <div class="tree" id="tree"></div>
+        <div style="display:flex;gap:6px;margin:8px 0"><select id="fileSort" aria-label="파일 정렬 기준" style="min-width:0;flex:1"><option value="name">이름순</option><option value="modified">수정일순</option></select><select id="fileDirection" aria-label="파일 정렬 방향" style="min-width:0;flex:1"><option value="asc">오름차순</option><option value="desc">내림차순</option></select></div><div class="tree" id="tree"></div>
         <div id="results"></div>
         <hr>
         <p>문서는 선택한 PC 폴더에 저장됩니다. 저장 전 사본은 .initsimx-backups 폴더에 보관됩니다.</p><button id="download">편집 내용 내려받기</button>
@@ -648,7 +648,7 @@
             <div aria-label="보기 모드" class="modebar" role="group">
                 <button class="active" data-mode="read">읽기</button>
                 <button data-mode="visual">Markdown 편집</button>
-                <button data-mode="source">소스</button>
+                <button data-mode="rich">직접 편집</button><button data-mode="source">소스</button>
                 <button data-mode="split">소스+미리보기</button>
             </div>
             <label class="width-control" title="문서 폭">폭 <input id="docWidth" max="1100" min="620" step="20" type="range" value="820"></label>
@@ -680,7 +680,7 @@
             </optgroup>
         </select>
             <button id="themePicker" class="theme-picker" type="button" aria-haspopup="dialog" aria-controls="themeDialog"><span class="theme-picker-label">문서 테마</span><strong id="themeCurrent">Less · 라이트</strong><span aria-hidden="true">⌄</span></button>
-            <button disabled id="save">저장</button>
+            <select id="documentFont" aria-label="문서 글꼴"><option value="paperlogy">페이퍼로지</option><option value="theme">테마 기본 글꼴</option><option value="sans">맑은 고딕</option><option value="serif">바탕</option><option value="mono">고정폭</option></select><button disabled id="save">저장</button>
         </div>
         <div class="stage mode-read" id="stage">
             <div class="pane source-pane"><textarea class="edit" disabled id="text" placeholder="왼쪽에서 Markdown 파일을 선택하세요" spellcheck="false"></textarea></div>
@@ -763,7 +763,7 @@
         demoMode=true;current='예시 문서.md';baseHash=null;dirty=false;visualChanged=false;
         $('text').value=await response.text();$('text').disabled=false;$('filename').textContent='예시 문서 · PC 저장 없음';
         $('save').disabled=true;$('renameFile').disabled=true;$('deleteFile').disabled=true;
-        if(mode==='visual')ensureVditor($('text').value);
+        if((mode==='visual'||mode==='rich'))ensureVditor($('text').value);
         render();status('예시 문서 · 파일을 수정하지 않습니다.');
     };
     $('download').onclick=()=>{const blob=new Blob([$('text').value],{type:'text/markdown;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=current?.split('/').pop()||'복구 메모.md';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
@@ -775,14 +775,15 @@
 
     function setMode(next) {
         if (visualChanged && !commitVisual()) return;
-        if(next === 'visual' && current) ensureVditor($('text').value);
+        if((next === 'visual'||next === 'rich') && current) ensureVditor($('text').value);
         mode = next;
+        if(vditor && editorReady)vditor.setMode(mode==='rich'?'wysiwyg':'sv');
         $('stage').className = 'stage mode-' + mode;
         applyTheme();
         document.querySelectorAll('.modebar button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
         applyTheme();
         if (vditor && editorReady) {
-            if (mode === 'visual') vditor.enable();
+            if ((mode === 'visual'||mode === 'rich')) vditor.enable();
             else vditor.disabled()
         }
         render();
@@ -820,7 +821,14 @@
         });
         let box = $('tree');
         box.replaceChildren();
-        const draw = (obj, prefix = '') => Object.keys(obj).sort((a, b) => a.localeCompare(b, 'ko')).forEach(k => {
+        const draw = (obj, prefix = '') => Object.keys(obj).sort((a,b)=>{
+            const x=obj[a],y=obj[b];
+            if(Boolean(x.path)!==Boolean(y.path))return x.path?1:-1;
+            const direction=$('fileDirection').value==='desc'?-1:1;
+            const name=a.localeCompare(b,'ko',{numeric:true,sensitivity:'base'});
+            if($('fileSort').value==='modified'&&x.path&&y.path)return direction*((x.lastModified||0)-(y.lastModified||0)||name);
+            return direction*name;
+        }).forEach(k => {
             const v = obj[k], path = prefix ? prefix + '/' + k : k;
             if (v.path) {
                 const b = document.createElement('button');
@@ -866,7 +874,7 @@
         visualChanged = false;
         status('저장됨');
         await loadTree();
-        if(mode==='visual')ensureVditor(d.content);
+        if((mode==='visual'||mode==='rich'))ensureVditor(d.content);
         render()
     }
 
@@ -880,7 +888,7 @@
         vditor = new Vditor('markdownEditor', {
             cdn: '/vendor/vditor',
             lang: 'ko_KR',
-            mode: 'sv',
+            mode: mode==='rich'?'wysiwyg':'sv',
             theme: $('theme').value === 'less-dark' ? 'dark' : 'classic',
             height: '100%',
             minHeight: 0,
@@ -912,7 +920,7 @@
                 vditor.setPreviewMode('editor');
                 applyTheme();
                 status('편집기 준비됨');
-                if (mode === 'visual') vditor.enable();
+                if ((mode === 'visual'||mode === 'rich')) vditor.enable();
                 else vditor.disabled()
             }
         })
@@ -1056,11 +1064,11 @@
                 const src=img.getAttribute('src')||'';
                 if(src.startsWith('data:image/'))continue;
                 try {
-                    if(/^https:\/\//i.test(src)){
+                    if(/^https:\/\//i.test(src) && !src.startsWith('https://static.wikia.nocookie.net/')){
                         img.src=src;
                         continue;
                     }
-                    if(/^http:\/\/init\.n-e\.kr:8081\//i.test(src)){
+                    if(/^http:\/\/init\.n-e\.kr:8081\//i.test(src)||src.startsWith('https://static.wikia.nocookie.net/')){
                         const proxy='/image-proxy?url='+encodeURIComponent(src);
                         const response=await fetch(proxy);
                         if(!response.ok)throw Error('원격 이미지 요청에 실패했습니다.');
@@ -1080,15 +1088,50 @@
             const darkPreview=darkThemes.has($('theme').value);
             const previewBg=darkPreview?'#202124':'#ffffff';
             const previewFg=darkPreview?'#e8e8ea':'#333333';
-            const layout=`:root{--app-preview-bg:${previewBg};--app-preview-fg:${previewFg}}html,body{margin:0;min-height:100%;}body{box-sizing:border-box;padding:24px clamp(16px,3vw,36px);min-height:100vh;background-color:var(--bg-contents,var(--bg-color,var(--app-preview-bg)));color:var(--color-text,var(--text-color,var(--app-preview-fg)));}#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin:0 auto;min-height:calc(100vh - 48px);font-size:${$('fontSize').value}px;overflow-wrap:anywhere;background-color:var(--bg-write,var(--bg-color,var(--app-preview-bg)));color:var(--color-text,var(--text-color,var(--app-preview-fg)))}img{max-width:100%;height:auto}table{max-width:100%;display:block;overflow-x:auto}#write pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}`;
-            const integration=`#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin-left:auto;margin-right:auto;min-height:calc(100vh - 48px);}`;
+            const layout=`:root{--app-preview-bg:${previewBg};--app-preview-fg:${previewFg}}html,body{margin:0;min-height:100%;}body{box-sizing:border-box;padding:24px clamp(16px,3vw,36px);min-height:100vh;background-color:var(--bg-contents,var(--bg-color,var(--app-preview-bg)));color:var(--color-text,var(--text-color,var(--app-preview-fg)));}#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin:0 auto;min-height:calc(100vh - 48px);font-size:16px;overflow-wrap:anywhere;background-color:var(--bg-write,var(--bg-color,var(--app-preview-bg)));color:var(--color-text,var(--text-color,var(--app-preview-fg)))}img{max-width:100%;height:auto}table{max-width:100%;display:block;overflow-x:auto}#write pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}`;
+            const fontFamilies={paperlogy:'"Paperlogy 4 Regular","Paperlogy-4Regular",Paperlogy,"Malgun Gothic",sans-serif',sans:'"Malgun Gothic",sans-serif',serif:'Batang,serif',mono:'Consolas,monospace'};
+            const selectedFont=fontFamilies[$('documentFont').value];
+            const fontRule=selectedFont?`#write,#write *{font-family:${selectedFont}!important}`:'';
+            doc.querySelectorAll('pre').forEach(pre=>{pre.classList.add('md-fences');});
+            const integration=`#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin-left:auto;margin-right:auto;min-height:calc(100vh - 48px);}${fontRule}#write pre.md-fences{position:relative;padding:42px 18px 18px!important;border:1px solid var(--table-border-color,#8885);border-radius:8px;background:var(--code-block-bg-color,var(--bg-code-block,var(--bg-color-dark,${darkPreview?'#181a20':'#f3f4f6'})))!important;color:var(--code-block-color,var(--color-code,inherit));}#write pre.md-fences code{display:block;background:transparent!important;color:inherit!important;border:0!important;padding:0!important;box-shadow:none!important}.code-copy{position:absolute;right:9px;top:8px;padding:4px 9px;border:1px solid #8886;border-radius:5px;background:transparent;color:inherit;cursor:pointer;font:12px sans-serif}`;
             const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob: https:; style-src \'self\' \'unsafe-inline\' https:; font-src \'self\' data: https:; form-action \'none\'; base-uri \'none\'"><style>'+layout+'</style><link rel="stylesheet" href="'+css+'"><style>'+integration+'</style></head><body><article id="write" class="reader">'+doc.body.innerHTML+'</article></body></html>';
-            for(const id of [mode==='visual'?'visualPreview':'reader']){
+            for(const id of [(mode==='visual'||mode==='rich')?'visualPreview':'reader']){
                 const host=$(id);const old=host.querySelector('iframe');
                 const frame=document.createElement('iframe');frame.title=id==='reader'?'문서 미리보기':'편집 미리보기';frame.setAttribute('sandbox','allow-same-origin');
                 // Same-origin permits parent scroll control; scripts remain prohibited by sandbox and CSP.
                 const scroll=old?.contentDocument?.scrollingElement?.scrollTop||0;
-                frame.onload=()=>{const d=frame.contentDocument;d.scrollingElement.scrollTop=scroll;d.addEventListener('click',event=>{const link=event.target.closest('a');if(!link)return;const href=link.getAttribute('href')||'';event.preventDefault();if(href.startsWith('#'))d.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView();});};
+                frame.onload=()=>{const d=frame.contentDocument;
+                    // Adapt generated cards in the preview only; keep the saved HTML intact.
+                    const isNeutral=color=>{
+                        const probe=d.createElement('span');probe.style.color=color;d.body.append(probe);
+                        const rgb=d.defaultView.getComputedStyle(probe).color.match(/[\d.]+/g)?.slice(0,3).map(Number);probe.remove();
+                        return rgb && Math.max(...rgb)-Math.min(...rgb)<35;
+                    };
+                    const candidates=[...d.querySelectorAll('#write .profile-card,#write div[style],#write a[style],#write section[style]')].filter(el=>
+                        el.matches('.profile-card') || (el.querySelector('img') && ((el.style.background && el.style.borderRadius) || (/font-family/i.test(el.getAttribute('style')||'') && /box-sizing/i.test(el.getAttribute('style')||'')))));
+                    const rootStyle=d.defaultView.getComputedStyle(d.getElementById('write'));
+                    const fg=rootStyle.color,bg=rootStyle.backgroundColor;
+                    const surface=`color-mix(in srgb, ${bg} 92%, ${fg} 8%)`;
+                    const adapted=new Set();
+                    candidates.forEach(card=>{
+                        card.classList.add('adaptive-profile');
+                        [card,...card.querySelectorAll('*')].forEach(el=>{
+                            if(el.tagName==='IMG'||adapted.has(el))return;
+                            adapted.add(el);
+                            const style=el.style;
+                            // Preserve user accent hues on titles, badges and photo borders.
+                            if(style.color && isNeutral(style.color))style.setProperty('color',fg,'important');
+                            const fill=style.backgroundColor;
+                            if(fill && isNeutral(fill))style.setProperty('background-color',surface,'important');
+                            if(style.borderColor && isNeutral(style.borderColor))style.setProperty('border-color',`color-mix(in srgb, ${fg} 24%, transparent)`,'important');
+                            if(el.matches('a,strong,b')){style.setProperty('text-decoration','none','important');style.setProperty('border-bottom','0','important');style.setProperty('box-shadow','none','important')}
+                        });
+                    });
+                    // Scale the rendered theme typography, including fixed sizes and inline card text.
+                    const ratio=Number($('fontSize').value)/16;
+                    const sizes=[...d.querySelectorAll('#write,#write *')].map(el=>[el,parseFloat(d.defaultView.getComputedStyle(el).fontSize)]);
+                    sizes.forEach(([el,size])=>{if(Number.isFinite(size))el.style.setProperty('font-size',`${size*ratio}px`,'important')});
+d.querySelectorAll('pre.md-fences').forEach(pre=>{const button=d.createElement('button');button.className='code-copy';button.type='button';button.textContent='복사';button.setAttribute('aria-label','코드 복사');button.onclick=async()=>{try{await navigator.clipboard.writeText(pre.querySelector('code')?.textContent||'');button.textContent='복사됨';setTimeout(()=>button.textContent='복사',1500)}catch{button.textContent='복사 실패'}};pre.append(button)});d.scrollingElement.scrollTop=scroll;d.addEventListener('click',event=>{const link=event.target.closest('a');if(!link)return;const href=link.getAttribute('href')||'';event.preventDefault();if(href.startsWith('#'))d.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView();});};
                 frame.srcdoc=html;host.replaceChildren(frame);
             }
             setTimeout(()=>oldURLs.forEach(URL.revokeObjectURL),1000);
@@ -1184,7 +1227,7 @@
             $('deleteFile').disabled = false;
             $('filename').textContent = current;
             await loadTree();
-            if(mode==='visual')ensureVditor('');
+            if((mode==='visual'||mode==='rich'))ensureVditor('');
             render();
             status('새 Markdown 파일 생성됨')
         } catch (e) {
@@ -1238,6 +1281,8 @@
         }
     }
 
+    $('documentFont').value=localStorage.getItem('document-font')||'paperlogy';
+    $('documentFont').onchange=()=>{localStorage.setItem('document-font',$('documentFont').value);render()};
     $('theme').value = localStorage.getItem('aichat-preview-theme') || 'less-light';
     const themeNames = {'less-light':'Less · 라이트','less-dark':'Less · 다크',adark:'Adark',alfluent:'Alfluent',drake:'Drake','drake-black':'Drake Black','drake-dark':'Drake Dark','drake-google':'Drake Google','drake-light':'Drake Light','drake-material':'Drake Material','drake-purple':'Drake Purple','drake-vue':'Drake Vue',fluent:'Fluent',github:'GitHub',mo:'Mo','mo-dark':'Mo Dark',newsprint:'Newsprint','notes-dark':'Notes Dark',pixyll:'Pixyll',whitey:'Whitey'};
     const themeColors = {'less-light':['#fff','#303038','#8e7be8'],'less-dark':['#25252b','#e7e5ed','#b9a3ff'],adark:['#22252a','#e8e8e8','#77b9d5'],alfluent:['#fff','#30343b','#0078d4'],drake:['#fff','#333','#4b8cca'],'drake-black':['#151515','#ddd','#f0c674'],'drake-dark':['#222','#ddd','#81a2be'],'drake-google':['#fff','#3c4043','#4285f4'],'drake-light':['#fff','#333','#4b8cca'],'drake-material':['#fafafa','#303030','#3f51b5'],'drake-purple':['#292633','#e5def2','#bb86fc'],'drake-vue':['#fff','#34495e','#42b983'],fluent:['#fff','#242424','#0078d4'],github:['#fff','#24292f','#0969da'],mo:['#fff','#343434','#dc4c40'],'mo-dark':['#272727','#eee','#ff7043'],newsprint:['#f4f1ea','#333','#b34a36'],'notes-dark':['#292929','#e8e8e8','#e5c454'],pixyll:['#fff','#333','#d55'],'whitey':['#fff','#333','#65a9c8']};
@@ -1287,6 +1332,10 @@
     $('createFile').onclick = createFile;
     $('renameFile').onclick = renameFile;
     $('deleteFile').onclick = deleteFile;
+    for(const id of ['fileSort','fileDirection']){
+        $(id).value=localStorage.getItem(id)|| (id==='fileSort'?'name':'asc');
+        $(id).onchange=()=>{localStorage.setItem(id,$(id).value);loadTree().catch(error=>status('목록 불러오기 실패: '+error.message))};
+    }
     $('refresh').onclick = loadTree;
     $('sidebarToggle').onclick = () => $('app').classList.toggle('sidebar-off');
     document.querySelectorAll('.modebar button').forEach(b => b.onclick = () => setMode(b.dataset.mode));

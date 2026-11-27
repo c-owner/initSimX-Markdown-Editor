@@ -17,7 +17,7 @@ class LocalFiles {
  async file(path){const [dir,name]=await this.parent(path);return dir.getFileHandle(name);}
  async read(path){const file=await(await this.file(path)).getFile();const content=await file.text();return {content,hash:await this.hash(content)};}
  async hash(text){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text))),x=>x.toString(16).padStart(2,'0')).join('');}
- async tree(){const files=[];if(!this.root)return {files};const walk=async(dir,prefix='')=>{for await(const [name,h]of dir.entries()){if(name.startsWith('.'))continue;const path=prefix+name;if(h.kind==='directory')await walk(h,path+'/');else if(/\.md$/i.test(name))files.push({path});}};await walk(this.root);return {files};}
+ async tree(){const files=[];if(!this.root)return {files};const walk=async(dir,prefix='')=>{for await(const [name,h]of dir.entries()){if(name.startsWith('.'))continue;const path=prefix+name;if(h.kind==='directory')await walk(h,path+'/');else if(/\.md$/i.test(name)){const file=await h.getFile();files.push({path,lastModified:file.lastModified});}}};await walk(this.root);return {files};}
  name(value){const name=value.trim();if(!name||/[\\/:\x00-\x1f]/.test(name)||name==='.'||name==='..')throw Error('파일 이름을 확인하세요.');return /\.md$/i.test(name)?name:name+'.md';}
  async absent(dir,name){try{await dir.getFileHandle(name);}catch(e){if(e.name==='NotFoundError')return;throw e;}throw Object.assign(Error('같은 이름의 파일이 이미 있습니다.'),{status:409});}
  async checked(path,hash){const data=await this.read(path);if(data.hash!==hash)throw Object.assign(Error('원본 파일이 다른 곳에서 변경되었습니다.'),{status:409});return data;}
