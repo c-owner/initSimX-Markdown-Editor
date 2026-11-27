@@ -43,3 +43,17 @@ Markdown 편집은 원문을 표시하는 Vditor 편집 패널과 격리된 미�
 개인용 프로젝트에서 편집 화면·생성기·문서 스타일을 가져왔으며 개인 문서와 이미지는 포함하지 않았습니다. Vditor와 하위 배포물의 라이선스는 `public/vendor/vditor/`에 보존했습니다. 프로젝트 자체의 공개 배포 라이선스는 아직 지정하지 않았습니다.
 
 문서 테마 CSS는 기존 Typora 설치의 `less-light.css`, `less-dark.css`와 참조 CSS를 `public/themes/`에 합쳐 보관했습니다. 원본 라이선스가 해당 로컬 테마 폴더에서 확인되지 않아 공개 배포 전 Less 테마의 재배포 조건 확인이 필요합니다.
+# Pages 배포
+
+Cloudflare Pages에 `main` 브랜치를 연결해 정식 배포하고, `develop`은 미리보기 배포에 사용하는 계획입니다. 저장소의 Pages 설정은 다음과 같습니다.
+
+- 빌드 명령: `npm run build`
+- 출력 폴더: `dist`
+- Cloudflare Pages 프로젝트 이름: `initsimx-markdown-editor`
+- 직접 배포: `npm run deploy` (먼저 `npx wrangler login`으로 Cloudflare 인증)
+
+Cloudflare Pages 프로젝트는 Cloudflare 계정에서 최초 한 번 생성하고, Git 통합에서 이 GitHub 저장소의 `main` 브랜치를 Production branch로 선택해야 합니다. `develop` 브랜치는 Preview branch로 연결합니다. `.pages.dev` 기본 주소가 정식 서비스 주소가 됩니다.
+
+현재 GitHub 기본 브랜치는 `master`이며 `main`/`develop` 원격 브랜치는 아직 없습니다. Cloudflare 계정 연결과 첫 공개 배포는 진행 전입니다.
+
+공개 배포 전에 `public/themes/less-light.css` 및 `less-dark.css`의 재배포 권리를 확인하세요. 이 파일은 로컬 Typora 테마 설치에서 가져왔고, 해당 설치 폴더에 라이선스 정보가 없습니다. Vditor와 번들 하위 라이브러리는 각 LICENSE 파일을 함께 포함합니다.
