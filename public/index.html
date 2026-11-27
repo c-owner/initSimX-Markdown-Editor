@@ -146,6 +146,53 @@
             font-size: 11px;
         }
 
+        .contact-trigger {
+            border: 0;
+            background: transparent;
+            color: #c4b5fd;
+            font: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .contact-dialog {
+            width: min(520px, calc(100% - 32px));
+            max-height: min(760px, calc(100% - 32px));
+            padding: 28px;
+            color: #f4f4f5;
+            background: #1c1c24;
+            border: 1px solid #3b3b49;
+            border-radius: 18px;
+        }
+
+        .contact-dialog::backdrop { background: rgb(0 0 0 / 72%); }
+        .contact-dialog h2 { margin: 0 0 8px; }
+        .contact-dialog p { color: #a1a1aa; line-height: 1.6; }
+        .contact-dialog label { display: block; margin-top: 16px; color: #d4d4d8; font-size: 14px; }
+        .contact-dialog input, .contact-dialog select, .contact-dialog textarea {
+            display: block;
+            width: 100%;
+            margin-top: 7px;
+            padding: 11px 12px;
+            color: #f4f4f5;
+            background: #101014;
+            border: 1px solid #3b3b49;
+            border-radius: 8px;
+            font: inherit;
+        }
+        .contact-dialog textarea { min-height: 140px; resize: vertical; }
+        .contact-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .contact-actions button { padding: 10px 16px; border: 1px solid #494957; border-radius: 8px; color: #f4f4f5; background: #292934; font: inherit; cursor: pointer; }
+        .contact-actions button[type="submit"] { color: #181320; background: #c4b5fd; border-color: #c4b5fd; font-weight: 700; }
+        .contact-status { min-height: 1.5em; margin-bottom: 0; font-size: 14px; }
+        .contact-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+        @media (max-width: 560px) {
+            footer { flex-wrap: wrap; }
+            .contact-dialog { padding: 22px; }
+        }
+
     </style>
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="./base.user.css?v=1">
@@ -197,8 +244,65 @@
     <footer>
         <span>initSimX · Local File Workspace</span>
         <span class="footer-version">v1.0.0</span>
+        <button class="contact-trigger" type="button" id="open-contact">문의하기</button>
     </footer>
 </main>
+
+<dialog class="contact-dialog" id="contact-dialog" aria-labelledby="contact-title">
+    <form id="contact-form">
+        <h2 id="contact-title">문의하기</h2>
+        <p>개선 제안이나 오류를 알려주세요. 이메일은 선택 항목이며, 입력한 내용은 비공개로 저장됩니다.</p>
+        <label>문의 종류
+            <select name="category" required>
+                <option value="suggestion">개선 제안</option>
+                <option value="bug">오류 신고</option>
+                <option value="other">기타 문의</option>
+            </select>
+        </label>
+        <label>내용
+            <textarea name="message" maxlength="5000" required placeholder="문의 내용을 입력해 주세요."></textarea>
+        </label>
+        <label>답변 받을 이메일 (선택)
+            <input name="email" type="email" maxlength="254" autocomplete="email" placeholder="example@email.com">
+        </label>
+        <label class="contact-honeypot" aria-hidden="true">비워 두세요
+            <input name="website" tabindex="-1" autocomplete="off">
+        </label>
+        <div class="contact-actions">
+            <button type="button" id="close-contact">닫기</button>
+            <button type="submit">보내기</button>
+        </div>
+        <p class="contact-status" id="contact-status" role="status" aria-live="polite"></p>
+    </form>
+</dialog>
+
+<script>
+    const contactDialog = document.querySelector('#contact-dialog');
+    const contactForm = document.querySelector('#contact-form');
+    const contactStatus = document.querySelector('#contact-status');
+    document.querySelector('#open-contact').addEventListener('click', () => contactDialog.showModal());
+    document.querySelector('#close-contact').addEventListener('click', () => contactDialog.close());
+    contactForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const submitButton = contactForm.querySelector('[type="submit"]');
+        submitButton.disabled = true;
+        contactStatus.textContent = '전송 중입니다…';
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(new FormData(contactForm)))
+            });
+            if (!response.ok) throw new Error(response.status === 429 ? '잠시 후 다시 시도해 주세요.' : '문의 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+            contactForm.reset();
+            contactStatus.textContent = '문의가 접수되었습니다. 감사합니다.';
+        } catch (error) {
+            contactStatus.textContent = error.message || '문의 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+</script>
 
 </body>
 </html>

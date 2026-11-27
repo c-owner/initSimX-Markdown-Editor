@@ -1,3 +1,9 @@
 name = "initsimx-markdown-editor"
 pages_build_output_dir = "./dist"
 compatibility_date = "2026-11-27"
+
+[[d1_databases]]
+binding = "CONTACT_DB"
+database_name = "initsimx-contact"
+database_id = "0d304159-56fb-4d41-833e-37c936e4dd5c"
+migrations_dir = "migrations"

@@ -648,7 +648,7 @@
             <div aria-label="보기 모드" class="modebar" role="group">
                 <button class="active" data-mode="read">읽기</button>
                 <button data-mode="visual">Markdown 편집</button>
-                <button data-mode="rich">직접 편집</button><button data-mode="source">소스</button>
+                <button data-mode="source">소스</button>
                 <button data-mode="split">소스+미리보기</button>
             </div>
             <label class="width-control" title="문서 폭">폭 <input id="docWidth" max="1100" min="620" step="20" type="range" value="820"></label>
@@ -763,7 +763,7 @@
         demoMode=true;current='예시 문서.md';baseHash=null;dirty=false;visualChanged=false;
         $('text').value=await response.text();$('text').disabled=false;$('filename').textContent='예시 문서 · PC 저장 없음';
         $('save').disabled=true;$('renameFile').disabled=true;$('deleteFile').disabled=true;
-        if((mode==='visual'||mode==='rich'))ensureVditor($('text').value);
+        if(mode==='visual')ensureVditor($('text').value);
         render();status('예시 문서 · 파일을 수정하지 않습니다.');
     };
     $('download').onclick=()=>{const blob=new Blob([$('text').value],{type:'text/markdown;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=current?.split('/').pop()||'복구 메모.md';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
@@ -775,15 +775,15 @@
 
     function setMode(next) {
         if (visualChanged && !commitVisual()) return;
-        if((next === 'visual'||next === 'rich') && current) ensureVditor($('text').value);
+        if(next === 'visual' && current) ensureVditor($('text').value);
         mode = next;
-        if(vditor && editorReady)vditor.setMode(mode==='rich'?'wysiwyg':'sv');
+
         $('stage').className = 'stage mode-' + mode;
         applyTheme();
         document.querySelectorAll('.modebar button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
         applyTheme();
         if (vditor && editorReady) {
-            if ((mode === 'visual'||mode === 'rich')) vditor.enable();
+            if (mode === 'visual') vditor.enable();
             else vditor.disabled()
         }
         render();
@@ -874,7 +874,7 @@
         visualChanged = false;
         status('저장됨');
         await loadTree();
-        if((mode==='visual'||mode==='rich'))ensureVditor(d.content);
+        if(mode==='visual')ensureVditor(d.content);
         render()
     }
 
@@ -888,7 +888,7 @@
         vditor = new Vditor('markdownEditor', {
             cdn: '/vendor/vditor',
             lang: 'ko_KR',
-            mode: mode==='rich'?'wysiwyg':'sv',
+            mode: 'sv',
             theme: $('theme').value === 'less-dark' ? 'dark' : 'classic',
             height: '100%',
             minHeight: 0,
@@ -920,7 +920,7 @@
                 vditor.setPreviewMode('editor');
                 applyTheme();
                 status('편집기 준비됨');
-                if ((mode === 'visual'||mode === 'rich')) vditor.enable();
+                if (mode === 'visual') vditor.enable();
                 else vditor.disabled()
             }
         })
@@ -1095,12 +1095,13 @@
             doc.querySelectorAll('pre').forEach(pre=>{pre.classList.add('md-fences');});
             const integration=`#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin-left:auto;margin-right:auto;min-height:calc(100vh - 48px);}${fontRule}#write pre.md-fences{position:relative;padding:42px 18px 18px!important;border:1px solid var(--table-border-color,#8885);border-radius:8px;background:var(--code-block-bg-color,var(--bg-code-block,var(--bg-color-dark,${darkPreview?'#181a20':'#f3f4f6'})))!important;color:var(--code-block-color,var(--color-code,inherit));}#write pre.md-fences code{display:block;background:transparent!important;color:inherit!important;border:0!important;padding:0!important;box-shadow:none!important}.code-copy{position:absolute;right:9px;top:8px;padding:4px 9px;border:1px solid #8886;border-radius:5px;background:transparent;color:inherit;cursor:pointer;font:12px sans-serif}`;
             const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob: https:; style-src \'self\' \'unsafe-inline\' https:; font-src \'self\' data: https:; form-action \'none\'; base-uri \'none\'"><style>'+layout+'</style><link rel="stylesheet" href="'+css+'"><style>'+integration+'</style></head><body><article id="write" class="reader">'+doc.body.innerHTML+'</article></body></html>';
-            for(const id of [(mode==='visual'||mode==='rich')?'visualPreview':'reader']){
+            for(const id of [mode==='visual'?'visualPreview':'reader']){
                 const host=$(id);const old=host.querySelector('iframe');
                 const frame=document.createElement('iframe');frame.title=id==='reader'?'문서 미리보기':'편집 미리보기';frame.setAttribute('sandbox','allow-same-origin');
                 // Same-origin permits parent scroll control; scripts remain prohibited by sandbox and CSP.
                 const scroll=old?.contentDocument?.scrollingElement?.scrollTop||0;
                 frame.onload=()=>{const d=frame.contentDocument;
+
                     // Adapt generated cards in the preview only; keep the saved HTML intact.
                     const isNeutral=color=>{
                         const probe=d.createElement('span');probe.style.color=color;d.body.append(probe);
@@ -1131,7 +1132,7 @@
                     const ratio=Number($('fontSize').value)/16;
                     const sizes=[...d.querySelectorAll('#write,#write *')].map(el=>[el,parseFloat(d.defaultView.getComputedStyle(el).fontSize)]);
                     sizes.forEach(([el,size])=>{if(Number.isFinite(size))el.style.setProperty('font-size',`${size*ratio}px`,'important')});
-d.querySelectorAll('pre.md-fences').forEach(pre=>{const button=d.createElement('button');button.className='code-copy';button.type='button';button.textContent='복사';button.setAttribute('aria-label','코드 복사');button.onclick=async()=>{try{await navigator.clipboard.writeText(pre.querySelector('code')?.textContent||'');button.textContent='복사됨';setTimeout(()=>button.textContent='복사',1500)}catch{button.textContent='복사 실패'}};pre.append(button)});d.scrollingElement.scrollTop=scroll;d.addEventListener('click',event=>{const link=event.target.closest('a');if(!link)return;const href=link.getAttribute('href')||'';event.preventDefault();if(href.startsWith('#'))d.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView();});};
+                    d.querySelectorAll('pre.md-fences').forEach(pre=>{const button=d.createElement('button');button.className='code-copy';button.type='button';button.textContent='복사';button.setAttribute('aria-label','코드 복사');button.onclick=async()=>{try{await navigator.clipboard.writeText(pre.querySelector('code')?.textContent||'');button.textContent='복사됨';setTimeout(()=>button.textContent='복사',1500)}catch{button.textContent='복사 실패'}};pre.append(button)});d.scrollingElement.scrollTop=scroll;d.addEventListener('click',event=>{const link=event.target.closest('a');if(!link)return;const href=link.getAttribute('href')||'';event.preventDefault();if(href.startsWith('#'))d.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView();});};
                 frame.srcdoc=html;host.replaceChildren(frame);
             }
             setTimeout(()=>oldURLs.forEach(URL.revokeObjectURL),1000);
@@ -1227,7 +1228,7 @@ d.querySelectorAll('pre.md-fences').forEach(pre=>{const button=d.createElement('
             $('deleteFile').disabled = false;
             $('filename').textContent = current;
             await loadTree();
-            if((mode==='visual'||mode==='rich'))ensureVditor('');
+            if(mode==='visual')ensureVditor('');
             render();
             status('새 Markdown 파일 생성됨')
         } catch (e) {

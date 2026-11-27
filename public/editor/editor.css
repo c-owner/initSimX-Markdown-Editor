@@ -59,4 +59,3 @@ body { display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
 #connectSide:hover { border-color:#a78bfa; }
 #connectSide { display:block; }
 
-.mode-rich .visual-pane{display:block}.mode-rich #visual{grid-template-columns:minmax(0,1fr)}.mode-rich #visualPreview{display:none}.mode-rich #markdownEditor .vditor-wysiwyg{padding:32px!important;overflow:auto;font-family:var(--app-font)!important}
