@@ -35,3 +35,26 @@ body { display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
  .visual .vditor-content { display:block; overflow:hidden; }
  #markdownEditor .vditor-sv { height:100%; flex:none; }
 }
+
+/* Vditor highlights code with theme-specific inline backgrounds; force the app's dark palette. */
+.stage[data-theme="dark"] #markdownEditor .vditor-sv pre,
+.stage[data-theme="dark"] #markdownEditor .vditor-sv pre.vditor-reset,
+.stage[data-theme="dark"] #markdownEditor .vditor-sv .vditor-ir__preview pre,
+.stage[data-theme="dark"] #markdownEditor .vditor-sv .vditor-wysiwyg pre {
+  background:#1b1b20 !important; color:#e7e5ed !important; border:1px solid #45454f !important;
+}
+.stage[data-theme="dark"] #markdownEditor .vditor-sv pre code,
+.stage[data-theme="dark"] #markdownEditor .vditor-sv pre code span {
+  background:transparent !important; color:inherit !important;
+}
+.stage[data-theme="dark"] #markdownEditor .vditor-sv .vditor-ir__preview,
+.stage[data-theme="dark"] #markdownEditor .vditor-sv .vditor-wysiwyg {
+  background:#262626 !important; color:#d8d8d8 !important;
+}
+.stage[data-theme="dark"] #markdownEditor .vditor-sv .vditor-ir__preview code:not(pre code),
+.stage[data-theme="dark"] #markdownEditor .vditor-sv .vditor-wysiwyg code:not(pre code) {
+  background:#303039 !important; color:#e7e5ed !important;
+}
+#connectSide { width:100%; margin:0 0 12px; padding:9px 12px; background:#373443; border-color:#5d526f; color:#eeeaf7; font-size:14px; }
+#connectSide:hover { border-color:#a78bfa; }
+#connectSide { display:block; }
