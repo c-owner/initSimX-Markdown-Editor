@@ -461,7 +461,14 @@
         }
 
         .reader iframe, .visual iframe {
-            max-width: 100%
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 72vh;
+            border: 1px solid #454552;
+            border-radius: 9px;
+            background: transparent;
+            box-shadow: 0 12px 34px #0007
         }
 
         .empty {
@@ -1011,7 +1018,7 @@
     }
 
     let appliedEditorTheme=null;
-    const darkThemes=new Set(['less-dark','adark','drake-black','drake-dark','mo-dark','notes-dark']);
+    const darkThemes=new Set(['less-dark','adark','drake-black','drake-dark','drake-material','drake-purple','mo-dark','notes-dark']);
     function applyTheme() {
         const selectedTheme=$('theme').value;
         const dark=darkThemes.has(selectedTheme);
@@ -1026,7 +1033,7 @@
     const themeCache=new Map();
     async function documentCSS(theme){
         const themeFile=theme==='less-light'?'less-light':theme==='less-dark'?'less-dark':theme;
-        if(!themeCache.has(theme))themeCache.set(theme,Promise.all(['/themes/'+themeFile+'.css','/style.css','/base.user.css'].map(async path=>{const response=await fetch(path);if(!response.ok)throw Error('문서 스타일을 불러올 수 없습니다: '+path);return response.text();})).then(parts=>parts.join('\n')).catch(error=>{themeCache.delete(theme);throw error;}));
+        if(!themeCache.has(theme))themeCache.set(theme,(async()=>{const path='/themes/'+themeFile+'.css';const response=await fetch(path);if(!response.ok)throw Error('문서 테마를 불러올 수 없습니다: '+path);return path;})().catch(error=>{themeCache.delete(theme);throw error;}));
         return themeCache.get(theme);
     }
     let renderVersion=0, previewURLs=[];
@@ -1070,8 +1077,12 @@
             }
             if(version!==renderVersion){urls.forEach(URL.revokeObjectURL);return;}
             const oldURLs=previewURLs;previewURLs=urls;
-            const override=`:root{--font-size:${$('fontSize').value}px;--doc-font-size:${$('fontSize').value}px;--font-family:var(--app-font)}html,body{margin:0;min-height:100%;background:var(--bg-contents);color:var(--color-text)}html body #write.reader{background:var(--bg-write,#262626)!important;color:var(--color-text,#d8d8d8)!important}html body #write.reader pre,html body #write.reader pre.md-fences{background:var(--bg-code-block,#263238)!important;color:var(--color-code,#d8d8d8)!important}html body #write.reader pre code{background:transparent!important;color:inherit!important}#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin:0 auto;padding:40px clamp(20px,5vw,64px);min-height:100vh;font-size:var(--doc-font-size);font-family:var(--app-font);overflow-wrap:anywhere}img{max-width:100%;height:auto}pre{white-space:pre-wrap}table{max-width:100%}#write pre{overflow-x:auto}`;
-            const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob: https:; style-src \'unsafe-inline\'; font-src \'none\'; form-action \'none\'; base-uri \'none\'"><style>'+css.replace(/<\/style/gi,'<\\/style')+'\n'+override+'</style></head><body><article id="write" class="reader">'+doc.body.innerHTML+'</article></body></html>';
+            const darkPreview=darkThemes.has($('theme').value);
+            const previewBg=darkPreview?'#202124':'#ffffff';
+            const previewFg=darkPreview?'#e8e8ea':'#333333';
+            const layout=`:root{--app-preview-bg:${previewBg};--app-preview-fg:${previewFg}}html,body{margin:0;min-height:100%;}body{box-sizing:border-box;padding:24px clamp(16px,3vw,36px);min-height:100vh;background-color:var(--bg-contents,var(--bg-color,var(--app-preview-bg)));color:var(--color-text,var(--text-color,var(--app-preview-fg)));}#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin:0 auto;min-height:calc(100vh - 48px);font-size:${$('fontSize').value}px;overflow-wrap:anywhere;background-color:var(--bg-write,var(--bg-color,var(--app-preview-bg)));color:var(--color-text,var(--text-color,var(--app-preview-fg)))}img{max-width:100%;height:auto}table{max-width:100%;display:block;overflow-x:auto}#write pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}`;
+            const integration=`#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin-left:auto;margin-right:auto;min-height:calc(100vh - 48px);}`;
+            const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob: https:; style-src \'self\' \'unsafe-inline\' https:; font-src \'self\' data: https:; form-action \'none\'; base-uri \'none\'"><style>'+layout+'</style><link rel="stylesheet" href="'+css+'"><style>'+integration+'</style></head><body><article id="write" class="reader">'+doc.body.innerHTML+'</article></body></html>';
             for(const id of [mode==='visual'?'visualPreview':'reader']){
                 const host=$(id);const old=host.querySelector('iframe');
                 const frame=document.createElement('iframe');frame.title=id==='reader'?'문서 미리보기':'편집 미리보기';frame.setAttribute('sandbox','allow-same-origin');
