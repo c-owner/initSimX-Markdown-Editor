@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
     <meta charset="utf-8">
     <meta content="width=device-width,initial-scale=1" name="viewport">
@@ -305,8 +305,8 @@
         </section>
         <section class="panel"><h2>사진 · 이모지</h2><label for="media">표시 방식</label><select id="media">
             <option value="emoji">이모지</option>
-            <option value="photo">로컬 사진</option>
-        </select><label for="emoji">이모지 / 짧은 문자</label><input id="emoji"><div class="control" hidden><label for="imageURL">이미지 링크 (이 버전에서는 로컬 사진 선택을 사용하세요)</label><input type="url" id="imageURL" placeholder="https://…/image.webp"><button type="button" id="loadImageURL">링크에서 불러오기</button><p>브라우저가 읽을 수 있는 JPG, PNG, WebP, GIF, AVIF, SVG, BMP, ICO 등을 지원합니다. GIF 등 움직이는 이미지는 내보낼 때 정지 이미지로 저장됩니다.</p></div><label for="photo">사진 선택</label><input accept="image/*" id="photo" type="file">
+            <option value="photo">사진 또는 URL</option>
+        </select><label for="emoji">이모지 / 짧은 문자</label><input id="emoji"><div class="control"><label for="imageURL">또는 이미지 URL</label><input type="url" id="imageURL" placeholder="https://example.com/image.webp"><button type="button" id="loadImageURL">URL에서 불러오기</button><p class="help">직접 이미지 주소를 입력하세요. CORS를 허용하는 서버의 이미지는 HTML에 포함되고, 그렇지 않은 이미지는 URL로 연결되어 인터넷 연결이 필요합니다.</p></div><label for="photo">사진 선택</label><input accept="image/*" id="photo" type="file">
             <p class="help">선택한 사진은 복사·HTML 다운로드 시 보이는 영역만 작은 WebP 데이터로 HTML 안에 포함합니다. 같은 결과는 재사용합니다.</p><label for="path">이미지 경로 (선택한 사진은 HTML에 포함)</label><input id="path" placeholder="G:\Pictures\부르마.png"><label class="row"><input id="embed"
                                                                                                                                                                                                  style="width:auto"
                                                                                                                                                                                                  type="checkbox">사진을 HTML에
@@ -579,6 +579,7 @@
             const data = await ProfileUpload.fromURL(url);
             if (ticket !== uploadTicket) return;
             p.data = data; p.media = 'photo'; p.path = url;
+            $('photo').value = '';
             render(); toast('링크의 사진을 불러왔습니다.');
         } catch (error) { toast(error.message); }
         finally { $('loadImageURL').disabled = false; }
@@ -599,6 +600,7 @@
             if (ticket !== uploadTicket) return;
             p.data = data;
             p.media = 'photo';
+            $('imageURL').value = '';
             if (!p.path) p.path = file.name;
             render();
             toast('사진을 불러왔습니다. HTML 복사 시 크롭하여 저장합니다.')

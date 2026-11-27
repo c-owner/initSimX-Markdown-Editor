@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -100,6 +100,7 @@ input[type="range"] {
 
 input[type="text"],
 input[type="file"],
+input[type="url"],
 textarea {
     width: 100%;
     background: #18181c;
@@ -180,7 +181,7 @@ button:hover {
         <div class="control-header">
             이미지 불러오기
         </div>
-        <input type="file" id="file" accept="image/*"><div class="control" hidden><label for="imageURL">이미지 링크 (이 버전에서는 로컬 사진 선택을 사용하세요)</label><input type="url" id="imageURL" placeholder="https://…/image.webp"><button type="button" id="loadImageURL">링크에서 불러오기</button><p>브라우저가 읽을 수 있는 JPG, PNG, WebP, GIF, AVIF, SVG, BMP, ICO 등을 지원합니다. GIF 등 움직이는 이미지는 내보낼 때 정지 이미지로 저장됩니다.</p></div>
+        <input type="file" id="file" accept="image/*"><div class="control"><label for="imageURL">또는 이미지 URL</label><input type="url" id="imageURL" placeholder="https://example.com/image.webp"><button type="button" id="loadImageURL">URL에서 불러오기</button><p>직접 이미지 주소를 입력하세요. CORS를 허용하는 서버의 이미지는 HTML에 포함되고, 그렇지 않은 이미지는 URL로 연결되어 인터넷 연결이 필요합니다.</p></div>
     </div>
     
     <div class="control">
@@ -307,6 +308,7 @@ $("file").addEventListener("change", event => {
     
     previewURL = URL.createObjectURL(file);
     $("photo").src = previewURL;
+    $("imageURL").value = '';
     
     $("path").value = file.name;
     

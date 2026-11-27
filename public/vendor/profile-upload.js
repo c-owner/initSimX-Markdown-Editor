@@ -15,11 +15,48 @@ window.ProfileDialog = {
 };
 /* Shared crop/export for the two profile helpers. */
 window.ProfileUpload = {
- async fromURL() {
-  throw Error('이미지를 PC에 저장한 뒤 사진 선택으로 불러와 주세요. 외부 서버 요청은 사용하지 않습니다.');
+ async fromURL(value) {
+  let url;
+  try { url = new URL(value, location.href); }
+  catch { throw Error('올바른 이미지 URL을 입력하세요.'); }
+  if (url.username || url.password || !['https:', 'http:'].includes(url.protocol)) {
+   throw Error('HTTPS 이미지 주소를 입력하세요.');
+  }
+
+  const legacyHttpImage = url.protocol === 'http:' && url.hostname === 'init.n-e.kr' && url.port === '8081' && url.pathname.startsWith('/Images/');
+  if (url.protocol === 'http:' && !legacyHttpImage) throw Error('보안 연결(HTTPS) 이미지 주소를 입력하세요.');
+
+  const source = legacyHttpImage ? new URL('/image-proxy', location.origin) : url;
+  if (legacyHttpImage) source.searchParams.set('url', url.href);
+
+  try {
+   const response = await fetch(source.href, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
+   if (!response.ok) throw Error(`이미지를 불러오지 못했습니다. (${response.status})`);
+   const type = (response.headers.get('content-type') || '').split(';', 1)[0].trim().toLowerCase();
+   if (!type.startsWith('image/')) throw Error('주소가 이미지 파일을 가리키지 않습니다.');
+   const blob = await response.blob();
+   if (blob.size > 20 * 1024 * 1024) throw Error('20MB 이하 이미지를 사용하세요.');
+   const data = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(Error('이미지를 읽지 못했습니다.'));
+    reader.readAsDataURL(blob);
+   });
+   const image = new Image(); image.src = data; await image.decode();
+   return data;
+  } catch (error) {
+   if (legacyHttpImage || error.message?.includes('20MB') || error.message?.includes('이미지 파일')) throw error;
+   // CORS가 없는 HTTPS 이미지는 직접 표시할 수 있지만 HTML에 내장하거나 크롭할 수는 없습니다.
+   const image = new Image(); image.referrerPolicy = 'no-referrer'; image.src = url.href;
+   try { await image.decode(); }
+   catch { throw Error('이미지를 열 수 없습니다. 직접 이미지 URL인지, 외부 사이트가 이미지 표시를 허용하는지 확인하세요.'); }
+   return url.href;
+  }
  },
  async crop(source, im) {
-  const img = new Image(); img.src = source; await img.decode();
+  const img = new Image();
+  if (/^https:\/\//i.test(source)) img.crossOrigin = 'anonymous';
+  img.referrerPolicy = 'no-referrer'; img.src = source; await img.decode();
   const w = Math.max(1, im.width - 2 * im.border), h = Math.max(1, im.height - 2 * im.border);
   const canvas = document.createElement('canvas');
   const ratio = Math.min(2, 1200 / Math.max(w, h));
@@ -33,7 +70,12 @@ window.ProfileUpload = {
   return blob;
  },
  async save(source, im) {
-  const blob=await this.crop(source, im);
+  let blob;
+  try { blob = await this.crop(source, im); }
+  catch (error) {
+   if (/^https:\/\//i.test(source)) return {url: source, embedded: false};
+   throw error;
+  }
   const url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
   return {url};
  }
