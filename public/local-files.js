@@ -1,7 +1,12 @@
 /* All document operations stay in the browser. No HTTP API. */
 class LocalFiles {
- constructor(){this.root=null;this.queue=Promise.resolve();}
- async connect(){this.root=await window.showDirectoryPicker({mode:'readwrite'});return this.root.name;}
+ constructor(){this.root=null;this.remembered=null;this.permissionReady=false;this.queue=Promise.resolve();}
+ openHandleDB(){return new Promise((resolve,reject)=>{const request=indexedDB.open('initsimx-local-folders',1);request.onupgradeneeded=()=>request.result.createObjectStore('handles');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
+ async storeHandle(handle){const db=await this.openHandleDB();await new Promise((resolve,reject)=>{const tx=db.transaction('handles','readwrite');tx.objectStore('handles').put(handle,'active');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}
+ async restore(){const db=await this.openHandleDB();const handle=await new Promise((resolve,reject)=>{const request=db.transaction('handles').objectStore('handles').get('active');request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error);});db.close();this.remembered=handle;if(!handle)return false;if(await handle.queryPermission({mode:'readwrite'})==='granted'){this.root=handle;return true;}return false;}
+ async requestRememberedPermission(){if(this.remembered&&await this.remembered.requestPermission({mode:'readwrite'})==='granted')this.permissionReady=true;}
+ async connect(){if(this.remembered&&this.permissionReady){this.root=this.remembered;this.permissionReady=false;return this.root.name;}this.root=await window.showDirectoryPicker({mode:'readwrite'});this.remembered=this.root;await this.storeHandle(this.root);return this.root.name;}
+ async disconnect(){this.root=null;this.remembered=null;this.permissionReady=false;const db=await this.openHandleDB();await new Promise((resolve,reject)=>{const tx=db.transaction('handles','readwrite');tx.objectStore('handles').delete('active');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}
  async parent(path){
   if(!this.root)throw Error('먼저 로컬 폴더를 연결하세요.');
   const parts=path.split('/');

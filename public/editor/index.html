@@ -594,7 +594,7 @@
     <link rel="stylesheet" href="/base.user.css?v=3">
 <link rel="stylesheet" href="/site.css"><link rel="stylesheet" href="/editor/editor.css"></head>
 <body>
-<header class="site-header"><a class="brand" href="/">◈ initSimX</a><nav class="site-nav" aria-label="주 메뉴"><a href="/editor/" aria-current="page">마크다운 편집기</a><a href="/helper/프로필_생성기.html" target="_blank" rel="noopener">프로필 생성기</a><a href="/helper/프로필카드_생성기.html" target="_blank" rel="noopener">카드 미리보기</a></nav><button id="connect">로컬 폴더 연결</button><span class="status" id="status" role="status">준비 중…</span></header>
+<header class="site-header"><a class="brand" href="/">◈ initSimX</a><nav class="site-nav" aria-label="주 메뉴"><a href="/editor/" aria-current="page">마크다운 편집기</a><a href="/helper/프로필_생성기.html" target="_blank" rel="noopener">프로필 생성기</a><a href="/helper/프로필카드_생성기.html" target="_blank" rel="noopener">카드 미리보기</a></nav><button id="connect">로컬 폴더 연결</button><button id="disconnect" type="button" hidden>연결 해제</button><span class="status" id="status" role="status">준비 중…</span></header>
 <div class="app" id="app">
     <aside>
         <button id="connectSide" type="button">로컬 폴더 연결</button>
@@ -694,16 +694,18 @@
     const api = (url, opts) => localFiles.request(url, opts);
     const connectLocalFolder = async () => {
         if (!window.showDirectoryPicker || !window.isSecureContext) { await notify('HTTPS 또는 localhost의 Chrome/Edge에서 열어 주세요.'); return; }
+        if (!localFiles.root && localFiles.remembered) { try { await localFiles.requestRememberedPermission(); } catch {} }
         if (!(await flushPendingChanges())) return;
         try { await localFiles.connect();clearTimeout(renderTimer);++renderVersion;demoMode=false;current=null; baseHash=null; dirty=false; visualChanged=false;
             $('text').value=''; $('text').disabled=true; $('save').disabled=true; $('renameFile').disabled=true; $('deleteFile').disabled=true;
             $('filename').textContent=localFiles.root.name; $('reader').replaceChildren();
             if(vditor && editorReady)vditor.setValue('',true);
-            render(); $('createFile').disabled=false; $('connectSide').textContent='폴더: '+localFiles.root.name; await loadTree(); status('연결됨 · '+localFiles.root.name);
+            render(); $('createFile').disabled=false; $('connectSide').textContent='폴더: '+localFiles.root.name; $('connect').textContent='폴더: '+localFiles.root.name; $('disconnect').hidden=false; await loadTree(); status('연결됨 · '+localFiles.root.name);
         } catch(e) { if(e.name!=='AbortError')status(e.message); }
     };
     $('connect').onclick=connectLocalFolder;
     $('connectSide').onclick=connectLocalFolder;
+    $('disconnect').onclick=async()=>{if(save.busy||!await flushPendingChanges())return;if(!await confirmUI('폴더 연결을 해제할까요? 다음 방문 때 다시 연결해야 합니다.'))return;await localFiles.disconnect();clearTimeout(timer);clearTimeout(renderTimer);++renderVersion;current=null;baseHash=null;dirty=false;demoMode=false;$('text').value='';$('text').disabled=true;$('save').disabled=true;$('renameFile').disabled=true;$('deleteFile').disabled=true;$('createFile').disabled=true;$('filename').textContent='폴더 연결 해제됨';$('connect').textContent='로컬 폴더 연결';$('connectSide').textContent='로컬 폴더 연결';$('disconnect').hidden=true;await loadTree();render();status('폴더 연결을 해제했습니다.');};
     $('demo').onclick=async()=>{
         if(save.busy)return;
         if(dirty && !await confirmUI('편집 중인 내용을 버리고 예시 문서를 열까요?'))return;
@@ -744,13 +746,16 @@
     }
 
     async function init() {
+        const restored=await localFiles.restore();
+        if(restored){$('connect').textContent='폴더: '+localFiles.root.name;$('connectSide').textContent='폴더: '+localFiles.root.name;$('disconnect').hidden=false;$('createFile').disabled=false;status('폴더 자동 연결됨 · '+localFiles.root.name);}
+        else if(localFiles.remembered){$('connect').textContent='폴더 권한 다시 승인';$('connectSide').textContent='저장된 폴더 다시 연결';status('저장된 폴더가 있습니다. 버튼을 눌러 접근을 승인하세요.');}
         csrf = (await api('/api/session')).csrf;
         $('createFile').disabled = !localFiles.root;
-        $('connectSide').textContent = localFiles.root ? '로컬 폴더 다시 연결' : '로컬 폴더 연결';
+        if(!localFiles.root&&!localFiles.remembered)$('connectSide').textContent='로컬 폴더 연결';
         $('docWidth').value = localStorage.getItem('aichat-doc-width') || 820;
         setWidth($('docWidth').value);
         await loadTree();
-        setMode('read'); status('로컬 폴더를 연결해 시작하세요 · 문서 업로드 없음')
+        setMode('read'); if(!localFiles.root&&!localFiles.remembered)status('로컬 폴더를 연결해 시작하세요 · 문서 업로드 없음')
     }
 
     async function loadTree() {
@@ -999,6 +1004,19 @@
                 const src=img.getAttribute('src')||'';
                 if(src.startsWith('data:image/'))continue;
                 try {
+                    if(/^https:\/\//i.test(src)){
+                        img.src=src;
+                        continue;
+                    }
+                    if(/^http:\/\/init\.n-e\.kr:8081\//i.test(src)){
+                        const proxy='/image-proxy?url='+encodeURIComponent(src);
+                        const response=await fetch(proxy);
+                        if(!response.ok)throw Error('원격 이미지 요청에 실패했습니다.');
+                        const blob=await response.blob();
+                        if(!blob.type.startsWith('image/'))throw Error('이미지 파일이 아닙니다.');
+                        const url=URL.createObjectURL(blob);urls.push(url);img.src=url;
+                        continue;
+                    }
                     if(/^[a-z]+:|^\/\//i.test(src))throw Error();
                     const parts=current.split('/').slice(0,-1);
                     for(const p of decodeURIComponent(src).split('/')){if(p==='..'){if(!parts.length)throw Error();parts.pop();}else if(p&&p!=='.')parts.push(p);}
@@ -1008,7 +1026,7 @@
             if(version!==renderVersion){urls.forEach(URL.revokeObjectURL);return;}
             const oldURLs=previewURLs;previewURLs=urls;
             const override=`:root{--font-size:${$('fontSize').value}px;--doc-font-size:${$('fontSize').value}px;--font-family:var(--app-font)}html,body{margin:0;min-height:100%;background:var(--bg-contents);color:var(--color-text)}html body #write.reader{background:var(--bg-write,#262626)!important;color:var(--color-text,#d8d8d8)!important}html body #write.reader pre,html body #write.reader pre.md-fences{background:var(--bg-code-block,#263238)!important;color:var(--color-code,#d8d8d8)!important}html body #write.reader pre code{background:transparent!important;color:inherit!important}#write.reader{box-sizing:border-box;max-width:${$('docWidth').value}px;min-width:0;width:100%;margin:0 auto;padding:40px clamp(20px,5vw,64px);min-height:100vh;font-size:var(--doc-font-size);font-family:var(--app-font);overflow-wrap:anywhere}img{max-width:100%;height:auto}pre{white-space:pre-wrap}table{max-width:100%}#write pre{overflow-x:auto}`;
-            const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob:; style-src \'unsafe-inline\'; font-src \'none\'; form-action \'none\'; base-uri \'none\'"><style>'+css.replace(/<\/style/gi,'<\\/style')+'\n'+override+'</style></head><body><article id="write" class="reader">'+doc.body.innerHTML+'</article></body></html>';
+            const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob: https:; style-src \'unsafe-inline\'; font-src \'none\'; form-action \'none\'; base-uri \'none\'"><style>'+css.replace(/<\/style/gi,'<\\/style')+'\n'+override+'</style></head><body><article id="write" class="reader">'+doc.body.innerHTML+'</article></body></html>';
             for(const id of [mode==='visual'?'visualPreview':'reader']){
                 const host=$(id);const old=host.querySelector('iframe');
                 const frame=document.createElement('iframe');frame.title=id==='reader'?'문서 미리보기':'편집 미리보기';frame.setAttribute('sandbox','allow-same-origin');
