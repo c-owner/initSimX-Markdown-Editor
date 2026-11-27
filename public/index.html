@@ -201,7 +201,9 @@
     </style>
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="./base.user.css?v=1">
-<link rel="stylesheet" href="/site.css"></head>
+<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/home.css">
+<script src="/home.js" defer></script></head>
 <body>
 
 <header>
@@ -209,13 +211,13 @@
     <nav class="site-nav" aria-label="주 메뉴"><a href="/editor/">마크다운 편집기</a><a href="/helper/프로필_생성기.html">프로필 생성기</a><a href="/helper/프로필카드_생성기.html">카드 미리보기</a><a href="/guide/">사용법</a></nav>
 </header>
 
-<main>
-    <div class="eyebrow">YOUR LOCAL WORKSPACE</div>
+<main id="workspace" tabindex="-1">
+    <div class="eyebrow">YOUR STORY, YOUR SPACE</div>
 
-    <h1>Creative Toolkit</h1>
+    <h1>당신의 이야기가 머무는 곳</h1>
 
     <p class="description">
-        문서는 내 PC에 그대로. 마크다운 편집과 프로필 제작을 한곳에서.
+        인물을 만들고, 순간을 기록하고, 다음 이야기를 이어가세요.<br>문서는 내 PC에 그대로. 마크다운 편집과 프로필 제작을 한곳에서.
     </p>
 
     <div class="grid">
@@ -253,6 +255,20 @@
         <button class="contact-trigger" type="button" id="open-contact">문의하기</button>
     </footer>
 </main>
+
+<dialog class="story-cover" id="story-cover" aria-labelledby="story-title" aria-describedby="story-description">
+    <div class="cover-orbit" aria-hidden="true"></div>
+    <div class="cover-content">
+        <p class="cover-brand">◈ initSimX <span>STORY WORKSPACE</span></p>
+        <div class="cover-rule" aria-hidden="true"></div>
+        <p class="cover-kicker">A PLACE FOR YOUR CHARACTERS &amp; MEMORIES</p>
+        <h2 id="story-title">모든 이야기는<br>당신에게서 시작됩니다.</h2>
+        <p id="story-description">기억하고 싶은 순간과, 오래 머물고 싶은 인물들.<br>당신만의 기록을 한 장씩 펼쳐보세요.</p>
+        <button class="enter-story" id="enter-story" type="button" autofocus>이야기 펼치기 <span aria-hidden="true">↗</span></button>
+        <p class="cover-footnote">당신의 인물 · 당신의 기록 · 당신의 세계</p>
+    </div>
+    <button class="skip-cover" id="skip-cover" type="button">바로 시작하기 <span aria-hidden="true">→</span></button>
+</dialog>
 
 <dialog class="contact-dialog" id="contact-dialog" aria-labelledby="contact-title">
     <form id="contact-form">
