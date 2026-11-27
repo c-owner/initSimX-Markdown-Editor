@@ -251,7 +251,7 @@
 <dialog class="contact-dialog" id="contact-dialog" aria-labelledby="contact-title">
     <form id="contact-form">
         <h2 id="contact-title">문의하기</h2>
-        <p>개선 제안이나 오류를 알려주세요. 이메일은 선택 항목이며, 입력한 내용은 비공개로 저장됩니다.</p>
+        <p>개선 제안이나 오류를 알려주세요. 답변을 받을 이메일과 문의 내용은 비공개로 저장됩니다.</p>
         <label>문의 종류
             <select name="category" required>
                 <option value="suggestion">개선 제안</option>
@@ -262,8 +262,8 @@
         <label>내용
             <textarea name="message" maxlength="5000" required placeholder="문의 내용을 입력해 주세요."></textarea>
         </label>
-        <label>답변 받을 이메일 (선택)
-            <input name="email" type="email" maxlength="254" autocomplete="email" placeholder="example@email.com">
+        <label>답변 받을 이메일 <span aria-hidden="true">*</span>
+            <input name="email" type="email" maxlength="254" autocomplete="email" placeholder="example@email.com" required>
         </label>
         <label class="contact-honeypot" aria-hidden="true">비워 두세요
             <input name="website" tabindex="-1" autocomplete="off">

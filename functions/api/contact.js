@@ -44,7 +44,7 @@ export async function onRequestPost({ request, env }) {
   if (!ALLOWED_CATEGORIES.has(category) || !message || message.length > MAX_MESSAGE_LENGTH) {
     return json({ error: '문의 종류와 내용을 확인해 주세요.' }, 400);
   }
-  if (email.length > MAX_EMAIL_LENGTH || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+  if (email.length > MAX_EMAIL_LENGTH || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ error: '이메일 주소를 확인해 주세요.' }, 400);
   }
 

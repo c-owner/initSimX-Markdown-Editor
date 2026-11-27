@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "include": ["/image-proxy"],
+  "include": ["/image-proxy", "/api/contact"],
   "exclude": []
 }
