@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /image-proxy
+
+Sitemap: https://initsimx-markdown-editor.pages.dev/sitemap.xml
