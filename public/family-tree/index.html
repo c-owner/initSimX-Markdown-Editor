@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111116">
+  <title>가계도 · initSimX</title>
+  <link rel="stylesheet" href="/site.css">
+  <link rel="stylesheet" href="/family-tree/family-tree.css">
+</head>
+<body class="family-app">
+  <header class="site-header">
+    <a class="brand" href="/">◈ initSimX</a>
+    <nav class="site-nav" aria-label="주 메뉴">
+      <a href="/editor/">마크다운 편집기</a><a href="/family-tree/" aria-current="page">가계도</a>
+      <a href="/helper/프로필_생성기.html">프로필 생성기</a><a href="/helper/프로필카드_생성기.html">카드 미리보기</a>
+    </nav>
+    <button id="connect" class="connect-button">로컬 폴더 연결</button>
+    <span id="status" role="status">폴더를 연결해 Markdown 인물을 불러오세요</span>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">FAMILY ARCHIVE · 01</p><h1>가계도</h1>
+        <p>인물 문서에 적어둔 가족 관계를 세대의 흐름으로 펼쳐봅니다.</p></div>
+      <div class="intro-actions"><button id="pick-files" class="quiet-button">Markdown 파일 선택</button><button id="demo" class="quiet-button">예시 보기</button><button id="refresh" class="quiet-button" disabled>다시 읽기</button></div>
+    </section>
+
+    <section class="workspace" aria-label="가계도 작업 공간">
+      <aside class="roster">
+        <div class="roster-heading"><div><span class="eyebrow">YOUR CAST</span><h2>인물 목록</h2></div><span id="count" class="count">0</span></div>
+        <div id="people-list" class="people-list"></div>
+        <div class="privacy-note"><span aria-hidden="true">◈</span><p>문서는 이 브라우저에서만 읽습니다.<br>원본 Markdown은 수정하지 않습니다.</p></div>
+      </aside>
+
+      <section class="tree-area" aria-label="세대별 가계도">
+        <div class="tree-toolbar"><div class="map-title"><span class="eyebrow">GENERATION MAP</span><p id="tree-caption">문서에 기록된 가족 관계가 여기에 표시됩니다.</p></div>
+          <label class="map-search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="인물 찾기" autocomplete="off"></label><span id="map-count" class="map-count">0명</span>
+          <div class="tree-tools"><button id="zoom-out" aria-label="축소" title="축소">−</button><span id="zoom-label">100%</span><button id="zoom-in" aria-label="확대" title="확대">＋</button><button id="fit" title="전체 보기">전체 보기</button></div>
+        </div>
+        <div id="tree-viewport" class="tree-viewport" tabindex="0" aria-label="가계도 캔버스. 확대 및 이동 가능">
+          <div id="empty" class="empty-state"><div class="empty-orbit"><span>✳</span></div><h2>가족의 이야기를 펼쳐보세요</h2><p>Markdown 폴더나 파일을 연결하거나 예시 가계도를 열어보세요.<br>부모·자녀·배우자 관계를 기록한 문장을 읽어 세대를 연결합니다.</p><div class="empty-actions"><button id="empty-connect">폴더 연결하기</button><button id="empty-files">파일 선택하기</button></div></div>
+          <div id="tree-stage" class="tree-stage" hidden><svg id="connections" class="connections" aria-hidden="true"></svg><div id="generations" class="generations"></div></div>
+        </div>
+        <div class="legend"><span><i class="legend-line parent-line"></i>부모 · 자녀</span><span><i class="legend-line spouse-line"></i>배우자</span><span class="legend-hint">카드를 선택하면 인물 문서와 관계 기록을 확인할 수 있어요</span></div>
+      </section>
+
+      <aside id="detail" class="detail" aria-live="polite"><div class="detail-placeholder"><span>✧</span><p>인물 카드를 선택하면<br>프로필과 관계 기록을 보여드립니다.</p></div></aside>
+    </section>
+    <section class="format-hint"><div class="hint-mark">i</div><div><strong>Markdown 구조를 읽습니다</strong><p><code># 인물 이름</code> 제목을 인물로 만들고, <code>#### 인물 A &lt;-&gt; 인물 B</code> 관계 제목을 연결합니다. 설명에 부모·딸·아들·부부처럼 가족 역할이 있으면 세대와 관계 종류도 구분합니다.</p></div><a href="/editor/">문서 편집하기 ↗</a></section>
+  </main>
+  <script src="/local-files.js"></script>
+  <script src="/family-tree/family-tree.js"></script>
+</body>
+</html>
